@@ -26,7 +26,23 @@ The busylightapi project is an open-source application programming interface (AP
 
 * Plug BusyLight device into a USB port on your computer
 * Run the busylightapi GUI: ```user@yourmachine:~$  java -jar busylight.jar```
+* Attempts to auto-detect a connected BusyLight and selects *Vendor* and *Product* automatically
 
 <p align="left">
 	<img src="image/busylight.png" alt="BusyLight GUI"/>
 </p>
+
+Options:
+
+* *Vendor* - vendor of device
+* *Product* - BusyLight devices
+* *Color* - color of light
+* *Type* - solid or blinking
+* *On time* - duration light is on (for blinking only)
+* *Off time* - duration light is off (for blinking only)
+* *Sound* - future use
+* *Send* - send the message to the light
+* *Stop* - send a stop message to the light
+* *Exit* - exit the tester UI
+
+
