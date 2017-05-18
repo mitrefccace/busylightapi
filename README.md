@@ -35,7 +35,7 @@ The BusyLightAPI class is a generic API for any external interface. It depends o
 </p>
 
 <p align="left">
-	<img src="image/lit.jpg" alt="BusyLight Omega"/>
+	<img src="image/lit.jpg"  width="25%" height="25%" alt="BusyLight Omega"/>
 </p>
 
 Options:
