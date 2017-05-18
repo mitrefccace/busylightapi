@@ -2,6 +2,8 @@
 
 The busylightapi project is an open-source application programming interface (API) and graphical user interface (GUI) tester for BusyLight devices by [Plenom A/S](https://www.busylight.com/en_us/). This is a platform-independent solution implemented in Java 8.
 
+The BusyLightAPI class is a generic API for any external interface. It depends on platform-specific runtime libraries from the hid4java project (see *hid4java\src\main\resources*). The BusyLightGUI class is a sample UI that uses the BusyLightAPI class to control the device.
+
 ### Requirements
 
 * Java SE Development Kit 8
@@ -30,6 +32,10 @@ The busylightapi project is an open-source application programming interface (AP
 
 <p align="left">
 	<img src="image/busylight.png" alt="BusyLight GUI"/>
+</p>
+
+<p align="left">
+	<img src="image/lit.jpg" alt="BusyLight Omega"/>
 </p>
 
 Options:
