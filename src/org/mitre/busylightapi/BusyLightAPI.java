@@ -10,17 +10,6 @@ import org.hid4java.HidServicesSpecification;
 import org.hid4java.ScanMode;
 import org.hid4java.event.HidServicesEvent;
 
-/* FROM THE COMMAND LINE
-From a bash term:
-
-1.	git clone git@github.com:gary-rowe/hid4java.git
-2.	Copy the attached Java program to hid4java\src\test\java\org\hid4java\BusyLightTest.java
-3.	cd hid4java
-4.	mvn clean install
-5.	mvn clean test exec:java -Dexec.classpathScope="test" -Dexec.mainClass="org.hid4java.BusyLightTest"
-
- */
-
 public class BusyLightAPI implements HidServicesListener {
 
 	//vendor IDs
@@ -59,9 +48,9 @@ public class BusyLightAPI implements HidServicesListener {
 
 		light.stop();
 		//light.steadyColor(Color.BLUE);
-		
+
 		Thread.sleep(26000);
-		
+
 
 		light.shutdown();
 		System.out.println("done.");
@@ -92,7 +81,7 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 		return ret;
 	}
-	
+
 	public int getProductIndex(int val) {
 		int ret = -1;
 		for (int i=0; i < products.length; i++) {
@@ -103,7 +92,7 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 		return ret;
 	}	
-	
+
 	public void steadyColor(Color c) {
 
 		if (hidDevice == null) {
@@ -115,7 +104,7 @@ public class BusyLightAPI implements HidServicesListener {
 		if (!hidDevice.isOpen()) {
 			hidDevice.open();
 		}
-	
+
 		short[] thecolor = colors[c.ordinal()]; 
 		short[] message = new short[]{
 				0x11, 0x00,thecolor[0], thecolor[1], thecolor[2], 0xFF, 0x00, 0x80,  //step 0
@@ -197,7 +186,7 @@ public class BusyLightAPI implements HidServicesListener {
 			System.err.println("error: " + hidDevice.getLastErrorMessage());
 		}
 	}	
-	
+
 	//time on and time off are in tenths of a second
 	public void blinkColor(Color c, int timeOn, int timeOff) {
 
@@ -273,7 +262,7 @@ public class BusyLightAPI implements HidServicesListener {
 		// Start the services
 		hidServices.start();
 	}
-	
+
 	public void initDevice(Vendor v, Product p, String serialNo) throws HidException {
 		// Open the device device by Vendor ID and Product ID with wildcard serial number
 		hidDevice = hidServices.getHidDevice(vendors[v.ordinal()], products[p.ordinal()], serialNo);
