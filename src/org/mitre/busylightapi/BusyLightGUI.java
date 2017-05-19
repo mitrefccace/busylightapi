@@ -1,7 +1,8 @@
 package org.mitre.busylightapi;
 
-import org.mitre.busylightapi.BusyLightAPI.Color;
+import org.mitre.busylightapi.BusyLightAPI.BLColor;
 import org.mitre.busylightapi.BusyLightAPI.Product;
+import org.mitre.busylightapi.BusyLightAPI.Ringtone;
 import org.mitre.busylightapi.BusyLightAPI.Vendor;
 
 import javafx.application.Application;
@@ -15,6 +16,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.Toggle;
@@ -26,11 +28,12 @@ import javafx.stage.Stage;
 public class BusyLightGUI extends Application {
 
 	private GridPane gridPane;
-	private Text status, ontimeT, offtimeT;
-	private ComboBox<String> cbVendor, cbProduct, cbColor;
+	private Text status, ontimeT, offtimeT, ringtoneT, sliderT;
+	private ComboBox<String> cbVendor, cbProduct, cbColor, cbRingtone;
 	private Spinner<Double> ontime, offtime;
 	private BusyLightAPI light;
 	private RadioButton rbSolid, rbBlink, rbOn, rbOff;
+	private Slider slider;
 	private ToggleGroup group, groupSound;
 
 	public static void main(String[] args) {
@@ -39,7 +42,6 @@ public class BusyLightGUI extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		light = new BusyLightAPI();
 
 		gridPane = new GridPane();
 		gridPane.setHgap(5);
@@ -69,9 +71,9 @@ public class BusyLightGUI extends Application {
 		gridPane.add(cbProduct ,  1, 1);		
 
 		gridPane.add(new Text("Color:"),  0, 2);
-		String[] colors = new String[Color.values().length];
-		for (int i=0; i < Color.values().length; i++) {
-			colors[i] = Color.values()[i].toString();
+		String[] colors = new String[BLColor.values().length];
+		for (int i=0; i < BLColor.values().length; i++) {
+			colors[i] = BLColor.values()[i].toString();
 		}
 		options = FXCollections.observableArrayList(colors);
 		cbColor = new ComboBox<String>(options);
@@ -138,7 +140,7 @@ public class BusyLightGUI extends Application {
 		gridPane.add(new Text("Sound:"),  0, 6);
 		rbOn = new RadioButton("On");
 		rbOff = new RadioButton("Off");
-		rbOff.setSelected(true);
+		rbOn.setSelected(true);
 		groupSound = new ToggleGroup();
 		rbOn.setToggleGroup(groupSound);
 		rbOff.setToggleGroup(groupSound);
@@ -149,8 +151,55 @@ public class BusyLightGUI extends Application {
 		gp3.setVgap(5);
 		gp3.setPadding(new Insets(10, 10, 10, 10));
 		gridPane.add(gp3,  1, 6);
-		//disable sound widgets for now
-		gp3.setDisable(true);
+		ringtoneT = new Text("Tone:");
+		gridPane.add(ringtoneT,  0, 7);
+		String[] ringtones = new String[Ringtone.values().length];
+		for (int i=0; i < Ringtone.values().length; i++) {
+			ringtones[i] = Ringtone.values()[i].toString();
+		}
+		ObservableList<String> rtoptions = FXCollections.observableArrayList(ringtones);
+		cbRingtone = new ComboBox<String>(rtoptions);
+		cbRingtone.getSelectionModel().selectFirst();
+
+		gridPane.add(cbRingtone ,  1, 7);		
+
+		slider = new Slider();
+		slider.setMin(0);
+		slider.setMax(7);
+		slider.setValue(3);
+		slider.setMajorTickUnit(1);
+		slider.setMinorTickCount(0);
+		slider.setShowTickLabels(true);
+		slider.setShowTickMarks(true);
+		slider.valueProperty().addListener(new ChangeListener<Number>() {
+			public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
+				slider.setValue(Math.round(new_val.doubleValue()));
+			}
+		});		
+		sliderT = new Text("Volume:");
+		gridPane.add(sliderT,  0, 8);
+		gridPane.add(slider,  1, 8);
+
+		groupSound.selectedToggleProperty().addListener(new ChangeListener<Toggle>(){
+			public void changed(ObservableValue<? extends Toggle> ov,
+					Toggle old_toggle, Toggle new_toggle) {
+				if (groupSound.getSelectedToggle() != null) {
+					RadioButton rb = (RadioButton)groupSound.getSelectedToggle();
+					if (rb.getText().equalsIgnoreCase("on")) {
+						ringtoneT.setVisible(true);
+						sliderT.setVisible(true);
+						cbRingtone.setDisable(false);
+						slider.setDisable(false);
+					} else {
+						ringtoneT.setVisible(false);
+						sliderT.setVisible(false);
+						cbRingtone.setDisable(true);
+						slider.setDisable(true);
+					}
+				}                
+			}
+		});			
+
 
 
 		status = new Text("");
@@ -165,44 +214,75 @@ public class BusyLightGUI extends Application {
 			cbProduct.getSelectionModel().select(ret[1]);
 		}
 
+		GridPane gp4 = new GridPane();
+		gp4.setHgap(15);
+		gp4.setVgap(5);
+		gp4.setPadding(new Insets(10, 10, 10, 10));		
+
 		Button button = new Button("Send");
 		button.setOnAction(e -> {
 			status.setText("");
-			if (light != null)
+			if (light != null) {
+				light.stop();
 				light.shutdown();
+			}
 			light = new BusyLightAPI();
 			light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
 
+			RadioButton rbSound = (RadioButton)groupSound.getSelectedToggle();
+			if (rbSound.getText().equalsIgnoreCase("on"))
+				light.setSoundEnabled(true);
+			else
+				light.setSoundEnabled(false);
+
+			//set ringtone and volume
+			light.setRingTone(Ringtone.valueOf(cbRingtone.getSelectionModel().getSelectedItem()));
+			light.setVolume((short)slider.getValue());
+
 			RadioButton rb = (RadioButton)group.getSelectedToggle();
-			Color c = Color.values()[cbColor.getSelectionModel().getSelectedIndex()];
+			BLColor c = BLColor.values()[cbColor.getSelectionModel().getSelectedIndex()];
 			if (rb.getText().equalsIgnoreCase("blink")) {
 				light.blinkColor(c, (int)(ontime.getValue()*10), (int)(offtime.getValue()*10));
 			} else {
 				light.steadyColor(c);
 			}
+
 		});
-		gridPane.add(button,  0, 7);
+		gp4.add(button,  0, 0);
 
 		Button buttonStop = new Button("Stop");
 		buttonStop.setOnAction(e -> {
 			status.setText("");
 			if (light != null)
 				light.stop();
-		});
-		gridPane.add(buttonStop,  1, 7);		
+		});	
+		gp4.add(buttonStop,  1, 0);
+
+		Button buttonKeepAlive = new Button("Keep Alive");
+		buttonKeepAlive.setOnAction(e -> {
+			status.setText("");
+			if (light != null)
+				light.keepAlive();
+		});	
+		gp4.add(buttonKeepAlive,  2, 0);
+
+		gridPane.add(gp4, 1, 9);
 
 		Button buttone = new Button("Exit");
 		buttone.setOnAction(e -> {
-			light.shutdown();
+			if (light != null) {
+				light.stop();
+				light.shutdown();
+			}
 			Platform.exit();
 		});
-		gridPane.add(buttone, 2,7);		
+		gridPane.add(buttone, 2, 9);		
 
-		gridPane.add(status,  1, 8);
+		gridPane.add(status,  1, 10);
 
 
 		//set the scene
-		Scene scene = new Scene(gridPane,315,300);
+		Scene scene = new Scene(gridPane,330,390);
 		stage.setTitle("BusyLight Tester");
 		stage.setScene(scene);
 		stage.setOnCloseRequest(e -> Platform.exit());

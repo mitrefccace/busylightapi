@@ -46,7 +46,9 @@ Options:
 * *Type* - solid or blinking
 * *On time* - duration light is on (for blinking only)
 * *Off time* - duration light is off (for blinking only)
-* *Sound* - future use
+* *Sound* - enable/disable the ringtone
+* *Tone* - ringtone choice
+* *Volume* - volume level of ringtone
 * *Send* - send the message to the light
 * *Stop* - send a stop message to the light
 * *Exit* - exit the tester UI

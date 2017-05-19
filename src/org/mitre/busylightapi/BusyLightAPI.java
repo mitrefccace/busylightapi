@@ -21,20 +21,28 @@ public class BusyLightAPI implements HidServicesListener {
 	private static int[] products = new int[]{ 0x3BCD, 0x3BCA, 0x3BCB, 0x3BCC, 0x3BC0 };
 
 	//colors
-	public static enum Color { RED, GREEN, BLUE, YELLOW, PINK, AQUA };
+	public static enum BLColor { RED, GREEN, BLUE, YELLOW, PINK, AQUA, WHITE };
 	private static short[][] colors = new short[][] {
-		{0xFF, 0x00, 0x00},
-		{0x00, 0xFF, 0x00},
-		{0x00, 0x00, 0xFF},
-		{0xFF, 0xFF, 0x00},
-		{0xFF, 0x00, 0xFF},
-		{0x00, 0xFF, 0xFF}
+		{0x50, 0x00, 0x00},
+		{0x00, 0x50, 0x00},
+		{0x00, 0x00, 0x50},
+		{0x50, 0x50, 0x00},
+		{0x50, 0x00, 0x50},
+		{0x00, 0x50, 0x50},
+		{0x50, 0x50, 0x50}
 	};
+
+	//sounds
+	public static enum Ringtone { TONE_RISING, TONE_PHONE, TONE_SIMON, TONE_ALTERNATIVE, TONE_CLASSIC, TONE_ALIEN, TONE_OFFICE, TONE_LIVEWIRE, TONE_OLD, TONE_TRON, TONE_DISCO } 
+	public static short[] ringtones = new short[]{ 0b10100011, 0b11000011,0b10010011, 0b10001011, 0b10110011, 0b10011011 , 0b10111011, 0b11101011, 0b11001011, 0b11010011, 0b10101011 };	
 
 	private static final int PACKET_LENGTH = 64;
 
 	private HidServices hidServices;
 	private HidDevice hidDevice;
+	private boolean bSound = false;
+	private Ringtone ringTone = Ringtone.TONE_RISING; //default
+	private short volume = 3;
 
 	public BusyLightAPI() {
 		initHidServices();
@@ -93,7 +101,7 @@ public class BusyLightAPI implements HidServicesListener {
 		return ret;
 	}	
 
-	public void steadyColor(Color c) {
+	public void steadyColor(BLColor c) {
 
 		if (hidDevice == null) {
 			System.err.println("Error- HID device is null");
@@ -105,9 +113,16 @@ public class BusyLightAPI implements HidServicesListener {
 			hidDevice.open();
 		}
 
+		short soundByte = 0x80; //off
+		if (bSound) {
+			soundByte = ringtones[ringTone.ordinal()];
+			//set volume
+			soundByte = (short) ((soundByte & 0xF8) + volume);
+		}
+
 		short[] thecolor = colors[c.ordinal()]; 
 		short[] message = new short[]{
-				0x11, 0x00,thecolor[0], thecolor[1], thecolor[2], 0xFF, 0x00, 0x80,  //step 0
+				0x11, 0x00,thecolor[0], thecolor[1], thecolor[2], 0xFF, 0x00, soundByte,  //step 0
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 1
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 2
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -141,6 +156,54 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 	}	
 
+	public void keepAlive() {
+		//keeps alive for max 11 seconds; send again to extend duration
+
+		if (hidDevice == null) {
+			System.err.println("Error- HID device is null");
+			return;
+		}
+
+		// Ensure device is open after an attach/detach event
+		if (!hidDevice.isOpen()) {
+			hidDevice.open();
+		}
+
+		short[] message = new short[]{
+				0x8F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 0
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 1
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 2
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00  //last two bytes are the MSB and LSB of the 16-bit checksum
+		}; 
+
+		//calculate checksum
+		int checksum = 0;
+		for (int i=0; i < 62; i++)
+			checksum += message[i];
+
+		//add checksum value
+		int msb = checksum >> 8;
+		int lsb = checksum & 0x00FF;
+		message[62] = (short)msb;
+		message[63] = (short)lsb;
+
+		//convert to byte array
+		byte[] message2 = new byte[message.length];
+		for (int i=0; i < message.length; i++)
+			message2[i] = (byte)message[i];
+
+		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
+		if (val >= 0) {
+			//System.out.println("rc: " + val );
+		} else {
+			System.err.println("error: " + hidDevice.getLastErrorMessage());
+		}
+	}
+
 	public void stop() {
 
 		if (hidDevice == null) {
@@ -153,7 +216,7 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 
 		short[] message = new short[]{
-				0x11, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,  //step 0
+				0x10, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x80,  //step 0
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 1
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 2
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -188,7 +251,7 @@ public class BusyLightAPI implements HidServicesListener {
 	}	
 
 	//time on and time off are in tenths of a second
-	public void blinkColor(Color c, int timeOn, int timeOff) {
+	public void blinkColor(BLColor c, int timeOn, int timeOff) {
 
 		if (hidDevice == null) {
 			System.err.println("Error- HID device is null");
@@ -211,9 +274,16 @@ public class BusyLightAPI implements HidServicesListener {
 			hidDevice.open();
 		}
 
+		short soundByte = 0x80; //off
+		if (bSound) {
+			soundByte = ringtones[ringTone.ordinal()];
+			//set volume
+			soundByte = (short) ((soundByte & 0xF8) + volume);
+		}
+
 		short[] thecolor = colors[c.ordinal()]; 
 		short[] message = new short[]{
-				0x11, 0x01, thecolor[0], thecolor[1], thecolor[2], (short)timeOn, 0x00, 0xA0,
+				0x11, 0x01, thecolor[0], thecolor[1], thecolor[2], (short)timeOn, 0x00, soundByte,
 				0x10, 0x01, 0x00, 0x00, 0x00, (short)timeOff, 0x00, 0xA0,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -292,5 +362,36 @@ public class BusyLightAPI implements HidServicesListener {
 	public void hidFailure(HidServicesEvent event) {
 		//event called when a HID device has a failure
 	}
+
+	public boolean isSoundEnabled() {
+		return bSound;
+	}
+
+	public void setSoundEnabled(boolean bSound) {
+		this.bSound = bSound;
+	}
+
+	public Ringtone getRingTone() {
+		return ringTone;
+	}
+
+	public void setRingTone(Ringtone ringTone) {
+		this.ringTone = ringTone;
+	}
+
+	public short getVolume() {
+		return volume;
+	}
+
+	public void setVolume(short volume) {
+		if (volume > 7 || volume < 0) {
+			System.err.println("Error - volume must be in the range 0-7.");
+			volume = 3;
+		}
+		this.volume = volume;
+	}
+
+
+
 
 }
