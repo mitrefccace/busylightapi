@@ -43,8 +43,10 @@ public class BusyLightAPI implements HidServicesListener {
 	private boolean bSound = false;
 	private Ringtone ringTone = Ringtone.TONE_RISING; //default
 	private short volume = 3;
+	private KeepAliveThread kaThread;
 
 	public BusyLightAPI() {
+		kaThread = new KeepAliveThread("kat", this);
 		initHidServices();
 	}
 
@@ -55,9 +57,18 @@ public class BusyLightAPI implements HidServicesListener {
 		light.initDevice(Vendor.PLENOM, Product.PRODUCT_OMEGA_ID, null);
 
 		light.stop();
-		//light.steadyColor(Color.BLUE);
+		light.steadyColor(BLColor.BLUE);
+
+		KeepAliveThread kathread = new KeepAliveThread("kat",light);
+		kathread.start();
+
+		System.out.println(" GOT HERE");
 
 		Thread.sleep(26000);
+		Thread.sleep(14000);
+
+		System.out.println("Stopping thread.");
+		kathread.interrupt();
 
 
 		light.shutdown();
@@ -102,6 +113,9 @@ public class BusyLightAPI implements HidServicesListener {
 	}	
 
 	public void steadyColor(BLColor c) {
+
+		if (kaThread != null && kaThread.isAlive())
+			kaThread.interrupt();
 
 		if (hidDevice == null) {
 			System.err.println("Error- HID device is null");
@@ -154,6 +168,10 @@ public class BusyLightAPI implements HidServicesListener {
 		} else {
 			System.err.println("error: " + hidDevice.getLastErrorMessage());
 		}
+
+		//keep alive
+		if (kaThread != null && !kaThread.isAlive())
+			kaThread.start();
 	}	
 
 	public void keepAlive() {
@@ -206,6 +224,11 @@ public class BusyLightAPI implements HidServicesListener {
 
 	public void stop() {
 
+		//stop the keep alive thread if it exists
+		if (kaThread != null && kaThread.isAlive()) {
+			kaThread.interrupt();
+		}
+
 		if (hidDevice == null) {
 			return;
 		}
@@ -252,6 +275,9 @@ public class BusyLightAPI implements HidServicesListener {
 
 	//time on and time off are in tenths of a second
 	public void blinkColor(BLColor c, int timeOn, int timeOff) {
+
+		if (kaThread != null && kaThread.isAlive())
+			kaThread.interrupt();		
 
 		if (hidDevice == null) {
 			System.err.println("Error- HID device is null");
@@ -315,6 +341,10 @@ public class BusyLightAPI implements HidServicesListener {
 		} else {
 			System.err.println("error: " + hidDevice.getLastErrorMessage());
 		}
+
+		//keep alive
+		if (kaThread != null && !kaThread.isAlive())
+			kaThread.start();		
 	}	
 
 	public void initHidServices() throws HidException {
@@ -342,6 +372,11 @@ public class BusyLightAPI implements HidServicesListener {
 	}	
 
 	public void shutdown() {
+		if (kaThread != null) {
+			if (kaThread.isAlive())
+				kaThread.interrupt();
+			kaThread = null;
+		}
 		if (hidDevice != null)
 			hidDevice.close();
 		if (hidServices != null)
@@ -390,8 +425,29 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 		this.volume = volume;
 	}
+}
 
+class KeepAliveThread extends Thread {
 
+	private static final int FREQUENCY_SECS = 10;
+	private boolean bAlive;
+	private BusyLightAPI theLight;
 
+	public KeepAliveThread(String name, BusyLightAPI light) {
+		super(name);
+		bAlive = true;
+		theLight = light;
+	}
 
+	@Override
+	public void run() {
+		while (bAlive) {
+			theLight.keepAlive();
+			try {
+				Thread.sleep(FREQUENCY_SECS * 1000);
+			} catch (InterruptedException e) {
+				bAlive = false;
+			}
+		}
+	}
 }

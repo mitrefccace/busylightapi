@@ -4,8 +4,6 @@ The busylightapi project is an open-source application programming interface (AP
 
 The BusyLightAPI class is a generic API for any external interface. It depends on platform-specific runtime libraries from the hid4java project (see *hid4java\src\main\resources*). The BusyLightGUI class is a sample UI that uses the BusyLightAPI class to control the device.
 
-The BusyLightGUI tester is configured to persist each sent message for 25 seconds only. To maintain the current command longer, use the *Keep Alive* button. This will persist the command an additional 10 seconds.
-
 ### Requirements
 
 * Java SE Development Kit 8
@@ -53,7 +51,6 @@ Options:
 * *Volume* - volume level of ringtone
 * *Send* - send the message to the light; persists for 25 seconds
 * *Stop* - send a stop message to the light
-* *Keep Alive* - send a keep alive message to persist the command for an additional 10 seconds
 * *Exit* - exit the tester UI
 
 

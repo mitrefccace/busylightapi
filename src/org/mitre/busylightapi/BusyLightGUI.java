@@ -258,14 +258,6 @@ public class BusyLightGUI extends Application {
 		});	
 		gp4.add(buttonStop,  1, 0);
 
-		Button buttonKeepAlive = new Button("Keep Alive");
-		buttonKeepAlive.setOnAction(e -> {
-			status.setText("");
-			if (light != null)
-				light.keepAlive();
-		});	
-		gp4.add(buttonKeepAlive,  2, 0);
-
 		gridPane.add(gp4, 1, 9);
 
 		Button buttone = new Button("Exit");
@@ -273,6 +265,7 @@ public class BusyLightGUI extends Application {
 			if (light != null) {
 				light.stop();
 				light.shutdown();
+				light = null;
 			}
 			Platform.exit();
 		});
@@ -285,7 +278,14 @@ public class BusyLightGUI extends Application {
 		Scene scene = new Scene(gridPane,330,390);
 		stage.setTitle("BusyLight Tester");
 		stage.setScene(scene);
-		stage.setOnCloseRequest(e -> Platform.exit());
+		stage.setOnCloseRequest(e -> {
+			if (light != null) {
+				light.stop();
+				light.shutdown();
+				light = null;
+			}			
+			Platform.exit();
+		});
 		stage.show();
 
 	}
