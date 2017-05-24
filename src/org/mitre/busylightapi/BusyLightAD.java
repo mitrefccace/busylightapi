@@ -50,9 +50,11 @@ public class BusyLightAD extends Application {
 			//socket = IO.socket("http://ntldevdemo.task3acrdemo.com:8005/"); //MIKE'S
 
 			socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
+				
+				//on connect, client should send token for authentication
 				@Override
 				public void call(Object... args) {
-					socket.emit("hi", "hidata");
+					socket.emit("blregister", "{\"token\": \"abc123xyz\"}");
 				}
 
 			}).on("message-stream", new Emitter.Listener() {

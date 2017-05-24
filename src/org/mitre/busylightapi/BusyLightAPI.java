@@ -21,15 +21,16 @@ public class BusyLightAPI implements HidServicesListener {
 	private static int[] products = new int[]{ 0x3BCD, 0x3BCA, 0x3BCB, 0x3BCC, 0x3BC0 };
 
 	//colors
-	public static enum BLColor { RED, GREEN, BLUE, YELLOW, PINK, AQUA, WHITE };
+	public static enum BLColor { RED, GREEN, BLUE, ORANGE, YELLOW, PINK, AQUA, WHITE };
 	private static short[][] colors = new short[][] {
-		{0x50, 0x00, 0x00},
-		{0x00, 0x50, 0x00},
-		{0x00, 0x00, 0x50},
-		{0x50, 0x50, 0x00},
-		{0x50, 0x00, 0x50},
-		{0x00, 0x50, 0x50},
-		{0x50, 0x50, 0x50}
+		{0x00 , 0x4B, 0x64}, //{0x64, 0x00, 0x00},
+		{0x00, 0x64, 0x00},
+		{0x00, 0x00, 0x64},
+		{0x64, 0x32, 0x00}, //orange
+		{0x64, 0x64, 0x00},
+		{0x64, 0x00, 0x64},
+		{0x00, 0x64, 0x64},
+		{0x64, 0x64, 0x64}
 	};
 
 	//sounds
@@ -57,16 +58,16 @@ public class BusyLightAPI implements HidServicesListener {
 		light.initDevice(Vendor.PLENOM, Product.PRODUCT_OMEGA_ID, null);
 
 		light.stop();
-		light.steadyColor(BLColor.BLUE);
+		//light.steadyColor(BLColor.BLUE);
+		//light.steadyColor( 0,191, 55 ); //RGB hex color: deepskyblue
+		//light.steadyColor( 233,150,122 ); //RGB hex color: darksalmon
+		//light.steadyColor( 178,34,34 ); //RGB hex color: firebrick
+		light.steadyColor( 255,215,0 ); //RGB hex color: gold
+		
 
 		KeepAliveThread kathread = new KeepAliveThread("kat",light);
 		kathread.start();
-
-		System.out.println(" GOT HERE");
-
-		Thread.sleep(26000);
-		Thread.sleep(14000);
-
+		
 		System.out.println("Stopping thread.");
 		kathread.interrupt();
 
@@ -173,7 +174,71 @@ public class BusyLightAPI implements HidServicesListener {
 		if (kaThread != null && !kaThread.isAlive())
 			kaThread.start();
 	}	
+	
+	//takes a standard HEX RGB color, converts it to PWM
+	public void steadyColor(int r, int g, int b) {
+		
+		short[] pwmcolor = convertHexToPWM(r,g,b);
+		
+		if (kaThread != null && kaThread.isAlive())
+			kaThread.interrupt();
 
+		if (hidDevice == null) {
+			System.err.println("Error- HID device is null");
+			return;
+		}
+
+		// Ensure device is open after an attach/detach event
+		if (!hidDevice.isOpen()) {
+			hidDevice.open();
+		}
+
+		short soundByte = 0x80; //off
+		if (bSound) {
+			soundByte = ringtones[ringTone.ordinal()];
+			//set volume
+			soundByte = (short) ((soundByte & 0xF8) + volume);
+		}
+
+		short[] message = new short[]{
+				0x11, 0x00,pwmcolor[0], pwmcolor[1], pwmcolor[2], 0xFF, 0x00, soundByte,  //step 0
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 1
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  //step 2
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x06, 0x93  //last two bytes are the MSB and LSB of the 16-bit checksum
+		}; 
+
+		//calculate checksum
+		int checksum = 0;
+		for (int i=0; i < 62; i++)
+			checksum += message[i];
+
+		//add checksum value
+		int msb = checksum >> 8;
+		int lsb = checksum & 0x00FF;
+		message[62] = (short)msb;
+		message[63] = (short)lsb;
+
+		//convert to byte array
+		byte[] message2 = new byte[message.length];
+		for (int i=0; i < message.length; i++)
+			message2[i] = (byte)message[i];
+
+		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
+		if (val >= 0) {
+			//System.out.println("rc: " + val );
+		} else {
+			System.err.println("error: " + hidDevice.getLastErrorMessage());
+		}
+
+		//keep alive
+		if (kaThread != null && !kaThread.isAlive())
+			kaThread.start();
+	}	
+	
 	public void keepAlive() {
 		//keeps alive for max 11 seconds; send again to extend duration
 
@@ -424,6 +489,21 @@ public class BusyLightAPI implements HidServicesListener {
 			volume = 3;
 		}
 		this.volume = volume;
+	}
+	
+	public static short[] convertHexToPWM(int r, int g, int b) {
+		short[] ret = new short[]{0,0,0};
+		
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+			System.err.println("BusyLightAPI:convertHexToPWM() - error: invalid RGB value(s): " + r + " , " + g + " , " + b);
+			return ret;
+		}
+		
+		ret[0] = (short)Math.round( (r / 255.0) * 100 );
+		ret[1] = (short)Math.round( (g / 255.0) * 100 );
+		ret[2] = (short)Math.round( (b / 255.0) * 100 );
+		
+		return ret;
 	}
 }
 
