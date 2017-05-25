@@ -63,11 +63,11 @@ public class BusyLightAPI implements HidServicesListener {
 		//light.steadyColor( 233,150,122 ); //RGB hex color: darksalmon
 		//light.steadyColor( 178,34,34 ); //RGB hex color: firebrick
 		light.steadyColor( 255,215,0 ); //RGB hex color: gold
-		
+
 
 		KeepAliveThread kathread = new KeepAliveThread("kat",light);
 		kathread.start();
-		
+
 		System.out.println("Stopping thread.");
 		kathread.interrupt();
 
@@ -171,15 +171,16 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 
 		//keep alive
-		if (kaThread != null && !kaThread.isAlive())
+		if (kaThread != null && !kaThread.isAlive()) {
 			kaThread.start();
+		}
 	}	
-	
+
 	//takes a standard HEX RGB color, converts it to PWM
 	public void steadyColor(int r, int g, int b) {
-		
+
 		short[] pwmcolor = convertHexToPWM(r,g,b);
-		
+
 		if (kaThread != null && kaThread.isAlive())
 			kaThread.interrupt();
 
@@ -235,10 +236,11 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 
 		//keep alive
-		if (kaThread != null && !kaThread.isAlive())
+		if (kaThread != null && !kaThread.isAlive()) {
 			kaThread.start();
+		}
 	}	
-	
+
 	public void keepAlive() {
 		//keeps alive for max 11 seconds; send again to extend duration
 
@@ -408,10 +410,87 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 
 		//keep alive
-		if (kaThread != null && !kaThread.isAlive())
-			kaThread.start();		
+		if (kaThread != null && !kaThread.isAlive()) {
+			kaThread.start();
+		}
 	}	
 
+	//time on and time off are in tenths of a second
+	public void blinkColor(int r, int g, int b, int timeOn, int timeOff) {
+
+		if (kaThread != null && kaThread.isAlive())
+			kaThread.interrupt();		
+
+		if (hidDevice == null) {
+			System.err.println("Error- HID device is null");
+			return;
+		}
+
+		short[] pwmcolor = convertHexToPWM(r,g,b);
+		
+		//time on and time off must be in the range 0 - 255 inclusive
+		if (timeOn < 0)
+			timeOn = 0;
+		else if (timeOn > 255)
+			timeOn = 255;
+
+		if (timeOff < 0)
+			timeOff = 0;
+		else if (timeOff > 255)
+			timeOff = 255;		
+
+		// Ensure device is open after an attach/detach event
+		if (!hidDevice.isOpen()) {
+			hidDevice.open();
+		}
+
+		short soundByte = 0x80; //off
+		if (bSound) {
+			soundByte = ringtones[ringTone.ordinal()];
+			//set volume
+			soundByte = (short) ((soundByte & 0xF8) + volume);
+		}
+
+		short[] message = new short[]{
+				0x11, 0x01, pwmcolor[0], pwmcolor[1], pwmcolor[2], (short)timeOn, 0x00, soundByte,
+				0x10, 0x01, 0x00, 0x00, 0x00, (short)timeOff, 0x00, 0xA0,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x06, 0x93  //last two bytes are the MSB and LSB of the 16-bit checksum
+		}; 
+
+		//calculate checksum
+		int checksum = 0;
+		for (int i=0; i < 62; i++)
+			checksum += message[i];
+
+		//add checksum value
+		int msb = checksum >> 8;
+		int lsb = checksum & 0x00FF;
+		message[62] = (short)msb;
+		message[63] = (short)lsb;
+
+		//convert to byte array
+		byte[] message2 = new byte[message.length];
+		for (int i=0; i < message.length; i++)
+			message2[i] = (byte)message[i];
+
+		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
+		if (val >= 0) {
+			//System.out.println("rc: " + val );
+		} else {
+			System.err.println("error: " + hidDevice.getLastErrorMessage());
+		}
+
+		//keep alive
+		if (kaThread != null && !kaThread.isAlive()) {
+			kaThread.start();
+		}
+	}		
+	
 	public void initHidServices() throws HidException {
 		// Configure to use custom specification
 		HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
@@ -490,26 +569,26 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 		this.volume = volume;
 	}
-	
+
 	public static short[] convertHexToPWM(int r, int g, int b) {
 		short[] ret = new short[]{0,0,0};
-		
+
 		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
 			System.err.println("BusyLightAPI:convertHexToPWM() - error: invalid RGB value(s): " + r + " , " + g + " , " + b);
 			return ret;
 		}
-		
+
 		ret[0] = (short)Math.round( (r / 255.0) * 100 );
 		ret[1] = (short)Math.round( (g / 255.0) * 100 );
 		ret[2] = (short)Math.round( (b / 255.0) * 100 );
-		
+
 		return ret;
 	}
 }
 
 class KeepAliveThread extends Thread {
 
-	private static final int FREQUENCY_SECS = 10;
+	private static final int FREQUENCY_SECS = 8;
 	private boolean bAlive;
 	private BusyLightAPI theLight;
 
