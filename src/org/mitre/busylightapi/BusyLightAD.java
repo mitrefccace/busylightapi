@@ -130,73 +130,14 @@ public class BusyLightAD extends Application {
 		buttonPaste.setGraphic(new ImageView(new Image("paste.png")));
 		buttonPaste.setOnAction(e -> {
 			pfURL.setText(clipboard.getString());
+			register();
 		});
 		gridPane.add(buttonPaste, 2, row);
 
 		row++;
 		buttonReg = new Button("Register");
 		buttonReg.setOnAction(e -> {
-			tStatus.setText("");
-			currentJson = "";
-			buttonReg.setDisable(true);
-			pfURL.setDisable(true);
-			buttonTest.setDisable(true);
-			buttonPaste.setDisable(true);
-			cbVendor.setDisable(true);
-			cbProduct.setDisable(true);
-			pfURL.setDisable(true);			
-
-			//send a test request
-			WebTarget target = client.target(getGETUri());
-			boolean bRegistered = true;
-			try {
-				tStatus.setText("");
-				Response response = target.request().accept("application/json; charset=utf-8").get();
-				String json = response.readEntity(String.class);
-
-				if (response.getStatus() != 200) {
-					bRegistered = false;
-					if (response.getStatus() == 401) {
-						System.out.println("in here");
-						tStatus.setFill(javafx.scene.paint.Color.RED);
-						tStatus.setText("invalid token");
-						tConnectStatus.setText("disconnected");
-						tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);						
-					}
-				} else {
-					tConnectStatus.setText("connected");
-					tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);						
-					if (!json.equalsIgnoreCase(currentJson)) {
-						processResponse(json);
-						currentJson = json;
-					}					
-					bRegistered = true;
-				}
-				response.close();			
-			} catch (Exception e1) {
-				bRegistered = false;
-				tStatus.setFill(javafx.scene.paint.Color.RED);
-				tStatus.setText("cannot reach server");
-				tConnectStatus.setText("disconnected");
-				tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);				
-			}
-
-			//if registration is good, start the polling
-			if (bRegistered) {
-				tConnectStatus.setText("connected");
-				tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);
-				pollTimeline.setCycleCount(Timeline.INDEFINITE);
-				pollTimeline.play();
-			} else {
-				buttonReg.setDisable(false);
-				pfURL.setDisable(false);
-				buttonTest.setDisable(false);
-				buttonPaste.setDisable(false);
-				cbVendor.setDisable(false);
-				cbProduct.setDisable(false);
-				pfURL.setDisable(false);				
-			}
-
+			register();
 		});	
 		GridPane gridPane2 = new GridPane();
 		gridPane2.setHgap(5);
@@ -254,7 +195,7 @@ public class BusyLightAD extends Application {
 					blinkTimeline.stop();
 				}
 				circle.setFill(Color.GRAY);
-				
+
 				buttonExit.setDisable(false);
 				buttonReg.setDisable(false);
 				pfURL.setDisable(false);
@@ -277,7 +218,7 @@ public class BusyLightAD extends Application {
 			light = new BusyLightAPI();
 			light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
 			light.blinkColor(BLColor.GREEN, 5, 1);
-			
+
 			blinkTimeline.stop();
 			circleBlinkColor = Color.rgb(0,255,0);
 			circleBlinkOn = false;
@@ -381,6 +322,69 @@ public class BusyLightAD extends Application {
 			shutdown();
 		});
 		stage.show();
+	}
+
+	public void register() {
+		tStatus.setText("");
+		currentJson = "";
+		buttonReg.setDisable(true);
+		pfURL.setDisable(true);
+		buttonTest.setDisable(true);
+		buttonPaste.setDisable(true);
+		cbVendor.setDisable(true);
+		cbProduct.setDisable(true);
+		pfURL.setDisable(true);			
+
+		//send a test request
+		WebTarget target = client.target(getGETUri());
+		boolean bRegistered = true;
+		try {
+			tStatus.setText("");
+			Response response = target.request().accept("application/json; charset=utf-8").get();
+			String json = response.readEntity(String.class);
+
+			if (response.getStatus() != 200) {
+				bRegistered = false;
+				if (response.getStatus() == 401) {
+					System.out.println("in here");
+					tStatus.setFill(javafx.scene.paint.Color.RED);
+					tStatus.setText("invalid token");
+					tConnectStatus.setText("disconnected");
+					tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);						
+				}
+			} else {
+				tConnectStatus.setText("connected");
+				tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);						
+				if (!json.equalsIgnoreCase(currentJson)) {
+					processResponse(json);
+					currentJson = json;
+				}					
+				bRegistered = true;
+			}
+			response.close();			
+		} catch (Exception e1) {
+			bRegistered = false;
+			tStatus.setFill(javafx.scene.paint.Color.RED);
+			tStatus.setText("cannot reach server");
+			tConnectStatus.setText("disconnected");
+			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);				
+		}
+
+		//if registration is good, start the polling
+		if (bRegistered) {
+			tConnectStatus.setText("connected");
+			tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);
+			pollTimeline.setCycleCount(Timeline.INDEFINITE);
+			pollTimeline.play();
+		} else {
+			buttonReg.setDisable(false);
+			pfURL.setDisable(false);
+			buttonTest.setDisable(false);
+			buttonPaste.setDisable(false);
+			cbVendor.setDisable(false);
+			cbProduct.setDisable(false);
+			pfURL.setDisable(false);				
+		}
 	}
 
 	public void processResponse(String json) {
