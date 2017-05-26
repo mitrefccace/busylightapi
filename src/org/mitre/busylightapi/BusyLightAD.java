@@ -33,6 +33,8 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.PasswordField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -44,6 +46,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 public class BusyLightAD extends Application {
@@ -73,6 +76,8 @@ public class BusyLightAD extends Application {
 	@Override
 	public void start(Stage stage) throws Exception {		
 
+		stage.setResizable(false);
+		
 		clipboard = Clipboard.getSystemClipboard();
 
 		currentJson = "";
@@ -352,11 +357,23 @@ public class BusyLightAD extends Application {
 		//set the scene
 		Scene scene = new Scene(gridPane,BWIDTH,BHEIGHT); 
 		stage.setTitle("BusyLight - ACE Direct");
+		
+        //MenuBar menuBar = new MenuBar();
+        //Menu menuFile = new Menu("File"); 
+        //Menu menuView = new Menu("View");
+        //menuBar.getMenus().addAll(menuFile, menuView);
+	
+        
 		stage.setScene(scene);
 		stage.setOnCloseRequest(e -> {
 			shutdown();
 		});
+		
+		
+			
+		
 		stage.show();
+		stage.requestFocus();
 	}
 
 	public void register() {
