@@ -227,7 +227,11 @@ public class BusyLightGUI extends Application {
 				light.shutdown();
 			}
 			light = new BusyLightAPI();
-			light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
+			boolean bRet = light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
+			if (!bRet) {
+				System.err.println("Unable to connect to device.");
+				System.exit(-1);
+			}
 
 			RadioButton rbSound = (RadioButton)groupSound.getSelectedToggle();
 			if (rbSound.getText().equalsIgnoreCase("on"))

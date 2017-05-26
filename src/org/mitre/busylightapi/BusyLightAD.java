@@ -50,28 +50,30 @@ public class BusyLightAD extends Application {
 
 	private GridPane gridPane;
 	private PasswordField pfURL;
-	private Text tStatus;
+	private Text tStatus,tConnectStatus;
 	private ComboBox<String> cbVendor, cbProduct;
 	private BusyLightAPI light;
-	private Timeline stopTimeline, pollTimeline, blinkTimeline;
+	private Timeline stopTimeline, pollTimeline, blinkTimeline, registerTimeline;
 	private Button buttonTest, buttonReg,buttonStop, buttonExit, buttonPaste;
-	private Text tConnectStatus; 
 	private Client client;
 	private String currentJson;
 	private Circle circle;
 	private boolean circleBlinkOn = false;
 	private Color circleBlinkColor;
 
-	private static Clipboard clipboard = Clipboard.getSystemClipboard();
+	private static Clipboard clipboard;
 	private static final int BWIDTH = 305;
-	private static final int BHEIGHT = 335;
+	private static final int BHEIGHT = 335;	
 
 	public static void main(String[] args) {
+
 		launch(args);
 	}
 
 	@Override
 	public void start(Stage stage) throws Exception {		
+
+		clipboard = Clipboard.getSystemClipboard();
 
 		currentJson = "";
 		stage.getIcons().add(new Image("ace.png"));
@@ -124,20 +126,32 @@ public class BusyLightAD extends Application {
 		pfURL.setText("https://localhost:1234/getagentstatus/abc123xyz"); //HERE remove later
 		gridPane.add(pfURL,  1, row);
 
-		//stage.getIcons().add(new Image("ace.png"));
-		//Image image = new Image(getClass().getResourceAsStream("paste.png"));
 		buttonPaste = new Button("");
 		buttonPaste.setGraphic(new ImageView(new Image("paste.png")));
 		buttonPaste.setOnAction(e -> {
+			tConnectStatus.setText("connecting...");
+			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
 			pfURL.setText(clipboard.getString());
-			register();
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					registerTimeline.play();
+				}
+			}); 
 		});
 		gridPane.add(buttonPaste, 2, row);
 
 		row++;
 		buttonReg = new Button("Register");
 		buttonReg.setOnAction(e -> {
-			register();
+			tConnectStatus.setText("connecting...");
+			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					registerTimeline.play();
+				}
+			});      			
 		});	
 		GridPane gridPane2 = new GridPane();
 		gridPane2.setHgap(5);
@@ -166,6 +180,9 @@ public class BusyLightAD extends Application {
 			}	
 			if (stopTimeline != null) {
 				stopTimeline.stop();
+			}
+			if (registerTimeline != null) {
+				registerTimeline.stop();
 			}			
 			if (light != null) {
 				light.stop();
@@ -180,7 +197,12 @@ public class BusyLightAD extends Application {
 
 		//auto-detect Busy Light
 		detectBusylight();			
-		light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
+		boolean bRet = light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
+		if (!bRet) {
+			System.err.println("Unable to connect to device. Make sure client is not already running.");
+			System.exit(-1);
+		}
+
 		light.setVolume((short)0);
 
 		stopTimeline = new Timeline(new KeyFrame(Duration.millis(1800), new EventHandler<ActionEvent>() {
@@ -204,7 +226,15 @@ public class BusyLightAD extends Application {
 				buttonPaste.setDisable(false);
 
 			}
+		}));
+
+		registerTimeline = new Timeline(new KeyFrame(Duration.millis(1), new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				register();
+			}
 		}));		
+		registerTimeline.setCycleCount(1);
 
 		buttonTest = new Button("Test");
 		buttonTest.setOnAction(e -> {
@@ -216,7 +246,13 @@ public class BusyLightAD extends Application {
 			}
 
 			light = new BusyLightAPI();
-			light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
+			boolean b1 = light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
+			if (!b1) {
+				System.err.println("Unable to connect to device. Make sure client is not already running.");
+				tStatus.setFill(Color.RED);
+				tStatus.setText("Cannot connect to device.");				
+			}
+
 			light.blinkColor(BLColor.GREEN, 5, 1);
 
 			blinkTimeline.stop();
@@ -224,7 +260,6 @@ public class BusyLightAD extends Application {
 			circleBlinkOn = false;
 			blinkTimeline.play();		
 
-			//stopTimeline.setCycleCount(Timeline.INDEFINITE);
 			stopTimeline.setCycleCount(1);
 			buttonExit.setDisable(true);
 			buttonReg.setDisable(true);
@@ -325,7 +360,6 @@ public class BusyLightAD extends Application {
 	}
 
 	public void register() {
-		tStatus.setText("");
 		currentJson = "";
 		buttonReg.setDisable(true);
 		pfURL.setDisable(true);
@@ -395,7 +429,12 @@ public class BusyLightAD extends Application {
 			light.shutdown();
 
 			light = new BusyLightAPI();
-			light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
+			boolean b1 = light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
+			if (!b1) {
+				System.err.println("Unable to connect to device. Make sure client is not already running.");
+				tStatus.setFill(Color.RED);
+				tStatus.setText("Cannot connect to device.");
+			}
 		}
 
 		try {
@@ -452,6 +491,9 @@ public class BusyLightAD extends Application {
 		if (blinkTimeline != null) {
 			blinkTimeline.stop();
 			circleBlinkOn = false;
+		}
+		if (registerTimeline != null) {
+			registerTimeline.stop();
 		}		
 		if (stopTimeline != null) {
 			stopTimeline.stop();

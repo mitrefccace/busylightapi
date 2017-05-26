@@ -507,12 +507,14 @@ public class BusyLightAPI implements HidServicesListener {
 		hidServices.start();
 	}
 
-	public void initDevice(Vendor v, Product p, String serialNo) throws HidException {
+	public boolean initDevice(Vendor v, Product p, String serialNo) throws HidException {
 		// Open the device device by Vendor ID and Product ID with wildcard serial number
 		hidDevice = hidServices.getHidDevice(vendors[v.ordinal()], products[p.ordinal()], serialNo);
 		if (hidDevice == null) {
 			System.err.println("Error getting HID device: " + v.toString() + " , " + p.toString());
+			return false;
 		}
+		return true; //device successfully initialized
 	}	
 
 	public void shutdown() {
