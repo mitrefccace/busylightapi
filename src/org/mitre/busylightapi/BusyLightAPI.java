@@ -427,7 +427,7 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 
 		short[] pwmcolor = convertHexToPWM(r,g,b);
-		
+
 		//time on and time off must be in the range 0 - 255 inclusive
 		if (timeOn < 0)
 			timeOn = 0;
@@ -490,7 +490,7 @@ public class BusyLightAPI implements HidServicesListener {
 			kaThread.start();
 		}
 	}		
-	
+
 	public void initHidServices() throws HidException {
 		// Configure to use custom specification
 		HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();

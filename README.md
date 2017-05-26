@@ -4,6 +4,8 @@ The busylightapi project is an open-source application programming interface (AP
 
 The BusyLightAPI class is a generic API for any external interface. It depends on platform-specific runtime libraries from the hid4java project (see *hid4java\src\main\resources*). The BusyLightGUI class is a sample UI that uses the BusyLightAPI class to control the device.
 
+See the BUSYLIGHTAD.md file for the GUI to integrate with ACE Direct.
+
 ### Requirements
 
 * Java SE Development Kit 8
