@@ -25,20 +25,26 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -46,11 +52,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 public class BusyLightAD extends Application {
 
+	private BorderPane root;
 	private GridPane gridPane;
 	private PasswordField pfURL;
 	private Text tStatus,tConnectStatus;
@@ -64,9 +70,10 @@ public class BusyLightAD extends Application {
 	private boolean circleBlinkOn = false;
 	private Color circleBlinkColor;
 
+	private Stage stage;
 	private static Clipboard clipboard;
 	private static final int BWIDTH = 305;
-	private static final int BHEIGHT = 335;	
+	private static final int BHEIGHT = 415;	
 
 	public static void main(String[] args) {
 
@@ -74,10 +81,11 @@ public class BusyLightAD extends Application {
 	}
 
 	@Override
-	public void start(Stage stage) throws Exception {		
+	public void start(Stage stg) throws Exception {		
 
+		stage = stg;
 		stage.setResizable(false);
-		
+
 		clipboard = Clipboard.getSystemClipboard();
 
 		currentJson = "";
@@ -136,7 +144,10 @@ public class BusyLightAD extends Application {
 		buttonPaste.setOnAction(e -> {
 			tConnectStatus.setText("connecting...");
 			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
-			pfURL.setText(clipboard.getString());
+			String cb = clipboard.getString();
+			if (cb == null)
+				cb = "";
+			pfURL.setText(cb);
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
@@ -229,6 +240,8 @@ public class BusyLightAD extends Application {
 				buttonStop.setDisable(false);
 				buttonTest.setDisable(false);
 				buttonPaste.setDisable(false);
+				cbVendor.setDisable(false);
+				cbProduct.setDisable(false);
 
 			}
 		}));
@@ -272,6 +285,8 @@ public class BusyLightAD extends Application {
 			buttonStop.setDisable(true);
 			buttonTest.setDisable(true);	
 			buttonPaste.setDisable(true);
+			cbVendor.setDisable(true);
+			cbProduct.setDisable(true);
 			stopTimeline.play();			
 
 		});	
@@ -291,11 +306,32 @@ public class BusyLightAD extends Application {
 		gridPane.add(tStatus,  1, row);
 
 		row++;
+		CheckBox cb = new CheckBox("Show icon");
+		cb.setSelected(true);
+		//cb.setText("First");
+		cb.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+            	CheckBox chk = (CheckBox) event.getSource();
+            	if (chk.isSelected()) {
+            		//show light icon
+            		stage.setHeight(BHEIGHT);
+            		root.setBottom(circle);
+            		
+            	} else {
+            		//hide light icon
+            		root.setBottom(null);
+            		stage.setHeight(BHEIGHT - (circle.getRadius() * 2) );
+            	}
+                
+            }
+        });
+		gridPane.add(cb, 1, row);
+
 		circle = new Circle(0, 0, 75);
 		circle.setFill(Color.GRAY);
 		circle.setStroke(Color.BLACK);
 		circle.setStrokeWidth(5);
-		gridPane.add(circle, 1, row);
 
 		pollTimeline = new Timeline(new KeyFrame(Duration.millis(1000), new EventHandler<ActionEvent>() {
 			@Override
@@ -354,24 +390,41 @@ public class BusyLightAD extends Application {
 		}));
 		blinkTimeline.setCycleCount(Timeline.INDEFINITE);
 
+
+		root = new BorderPane();
+
 		//set the scene
-		Scene scene = new Scene(gridPane,BWIDTH,BHEIGHT); 
-		stage.setTitle("BusyLight - ACE Direct");
+		Scene scene = new Scene(root);
+		stage.setHeight(BHEIGHT);
+		stage.setWidth(BWIDTH);
 		
-        //MenuBar menuBar = new MenuBar();
-        //Menu menuFile = new Menu("File"); 
-        //Menu menuView = new Menu("View");
-        //menuBar.getMenus().addAll(menuFile, menuView);
-	
-        
+		root.setCenter(gridPane);
+
+		stage.setTitle("BusyLight - ACE Direct");
+
+		//set up menu
+		MenuBar menuBar = new MenuBar();
+		Menu menuFile = new Menu("File");
+		MenuItem exitMenuItem = new MenuItem("Exit");
+		exitMenuItem.setOnAction(actionEvent -> shutdown());
+		menuFile.getItems().addAll(exitMenuItem);
+		Menu menuView = new Menu("View");
+		Menu menuHelp = new Menu("Help");
+		menuBar.getMenus().addAll(menuFile, menuView, menuHelp);
+		root.setTop(menuBar);
+
+		BorderPane.setAlignment(circle, Pos.CENTER);
+		BorderPane.setMargin(circle, new Insets(0,0,15,0)); // optional
+		root.setBottom(circle);
+
 		stage.setScene(scene);
 		stage.setOnCloseRequest(e -> {
 			shutdown();
 		});
-		
-		
-			
-		
+
+
+
+
 		stage.show();
 		stage.requestFocus();
 	}
@@ -444,6 +497,11 @@ public class BusyLightAD extends Application {
 			detectBusylight();			
 			light.stop();
 			light.shutdown();
+
+			if (blinkTimeline != null) {
+				blinkTimeline.stop();
+				circleBlinkOn = false;
+			}			
 
 			light = new BusyLightAPI();
 			boolean b1 = light.initDevice(Vendor.valueOf(cbVendor.getSelectionModel().getSelectedItem()) , Product.valueOf(cbProduct.getSelectionModel().getSelectedItem()) , null);
