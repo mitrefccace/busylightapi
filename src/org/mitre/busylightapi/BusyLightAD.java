@@ -5,7 +5,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-
 import javax.net.ssl.HostnameVerifier;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -25,10 +24,9 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -62,13 +60,14 @@ public class BusyLightAD extends Application {
 	private Text tStatus,tConnectStatus;
 	private ComboBox<String> cbVendor, cbProduct;
 	private BusyLightAPI light;
-	private Timeline stopTimeline, pollTimeline, blinkTimeline, registerTimeline;
+	private Timeline stopTimeline, pollTimeline, blinkTimeline;
 	private Button buttonTest, buttonReg,buttonStop, buttonExit, buttonPaste;
 	private Client client;
 	private String currentJson;
 	private Circle circle;
 	private boolean circleBlinkOn = false;
 	private Color circleBlinkColor;
+	private Thread th;
 
 	private Stage stage;
 	private static Clipboard clipboard;
@@ -81,7 +80,7 @@ public class BusyLightAD extends Application {
 	}
 
 	@Override
-	public void start(Stage stg) throws Exception {		
+	public void start(Stage stg) throws Exception {
 
 		stage = stg;
 		stage.setResizable(false);
@@ -148,12 +147,17 @@ public class BusyLightAD extends Application {
 			if (cb == null)
 				cb = "";
 			pfURL.setText(cb);
-			Platform.runLater(new Runnable() {
-				@Override
-				public void run() {
-					registerTimeline.play();
+
+			//start a background thread to register, because it might take a while		
+			th = new Thread(new Task<Void>() {
+				@Override protected Void call() throws Exception {
+					register();
+					return null;
 				}
-			}); 
+			});
+			th.setDaemon(true);
+			th.start();
+
 		});
 		gridPane.add(buttonPaste, 2, row);
 
@@ -162,12 +166,17 @@ public class BusyLightAD extends Application {
 		buttonReg.setOnAction(e -> {
 			tConnectStatus.setText("connecting...");
 			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
-			Platform.runLater(new Runnable() {
-				@Override
-				public void run() {
-					registerTimeline.play();
+
+			//start a background thread to register, because it might take a while
+			th = new Thread(new Task<Void>() {
+				@Override protected Void call() throws Exception {
+					register();
+					return null;
 				}
-			});      			
+			});
+			th.setDaemon(true);
+			th.start();
+
 		});	
 		GridPane gridPane2 = new GridPane();
 		gridPane2.setHgap(5);
@@ -197,9 +206,6 @@ public class BusyLightAD extends Application {
 			if (stopTimeline != null) {
 				stopTimeline.stop();
 			}
-			if (registerTimeline != null) {
-				registerTimeline.stop();
-			}			
 			if (light != null) {
 				light.stop();
 				light.shutdown();
@@ -245,14 +251,6 @@ public class BusyLightAD extends Application {
 
 			}
 		}));
-
-		registerTimeline = new Timeline(new KeyFrame(Duration.millis(1), new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				register();
-			}
-		}));		
-		registerTimeline.setCycleCount(1);
 
 		buttonTest = new Button("Test");
 		buttonTest.setOnAction(e -> {
@@ -310,22 +308,22 @@ public class BusyLightAD extends Application {
 		cb.setSelected(true);
 		//cb.setText("First");
 		cb.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-            	CheckBox chk = (CheckBox) event.getSource();
-            	if (chk.isSelected()) {
-            		//show light icon
-            		stage.setHeight(BHEIGHT);
-            		root.setBottom(circle);
-            		
-            	} else {
-            		//hide light icon
-            		root.setBottom(null);
-            		stage.setHeight(BHEIGHT - (circle.getRadius() * 2) );
-            	}
-                
-            }
-        });
+			@Override
+			public void handle(ActionEvent event) {
+				CheckBox chk = (CheckBox) event.getSource();
+				if (chk.isSelected()) {
+					//show light icon
+					stage.setHeight(BHEIGHT);
+					root.setBottom(circle);
+
+				} else {
+					//hide light icon
+					root.setBottom(null);
+					stage.setHeight(BHEIGHT - (circle.getRadius() * 2) );
+				}
+
+			}
+		});
 		gridPane.add(cb, 1, row);
 
 		circle = new Circle(0, 0, 75);
@@ -339,6 +337,7 @@ public class BusyLightAD extends Application {
 				try {
 					WebTarget target = client.target(getGETUri());
 					Response response = target.request().accept("application/json; charset=utf-8").get();
+					tStatus.setText("");					
 					if (response.getStatus() != 200) {
 						if (response.getStatus() == 401) {
 							tStatus.setFill(javafx.scene.paint.Color.RED);
@@ -364,15 +363,17 @@ public class BusyLightAD extends Application {
 						}
 					}					
 					response.close();
-
-					//System.out.println("Sent GET request...");
 				} catch (ProcessingException e1) {
-					//System.err.println("lost remote connection");
 					light.stop();
+					circle.setFill(Color.GRAY);
 					tStatus.setFill(javafx.scene.paint.Color.RED);
 					tStatus.setText("lost remote connection");
 					tConnectStatus.setText("disconnected");
-					tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);					
+					tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
+					if (blinkTimeline != null) {
+						blinkTimeline.stop();
+						circleBlinkOn = false;
+					}					
 				}
 			}
 		}));		
@@ -397,7 +398,7 @@ public class BusyLightAD extends Application {
 		Scene scene = new Scene(root);
 		stage.setHeight(BHEIGHT);
 		stage.setWidth(BWIDTH);
-		
+
 		root.setCenter(gridPane);
 
 		stage.setTitle("BusyLight - ACE Direct");
@@ -432,6 +433,7 @@ public class BusyLightAD extends Application {
 	public void register() {
 		currentJson = "";
 		buttonReg.setDisable(true);
+		buttonStop.setDisable(true);
 		pfURL.setDisable(true);
 		buttonTest.setDisable(true);
 		buttonPaste.setDisable(true);
@@ -476,12 +478,13 @@ public class BusyLightAD extends Application {
 
 		//if registration is good, start the polling
 		if (bRegistered) {
+			buttonStop.setDisable(false);
 			tConnectStatus.setText("connected");
 			tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);
 			pollTimeline.setCycleCount(Timeline.INDEFINITE);
 			pollTimeline.play();
 		} else {
-			buttonReg.setDisable(false);
+			buttonStop.setDisable(false);		
 			pfURL.setDisable(false);
 			buttonTest.setDisable(false);
 			buttonPaste.setDisable(false);
@@ -567,8 +570,8 @@ public class BusyLightAD extends Application {
 			blinkTimeline.stop();
 			circleBlinkOn = false;
 		}
-		if (registerTimeline != null) {
-			registerTimeline.stop();
+		if (th != null) {
+			th.interrupt();
 		}		
 		if (stopTimeline != null) {
 			stopTimeline.stop();
