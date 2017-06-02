@@ -102,7 +102,7 @@ public class BusyLightAD extends Application {
 		int row = 0;
 
 		gridPane.add(new Text("Status:"),  0, row);
-		tConnectStatus = new Text("disconnected");
+		tConnectStatus = new Text("Disconnected");
 		tConnectStatus.setFont(Font.font("Verdana", FontWeight.BOLD, 12));
 		tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
 		gridPane.add(tConnectStatus,  1, row);
@@ -186,7 +186,7 @@ public class BusyLightAD extends Application {
 		buttonStop = new Button("Stop");
 		buttonStop.setOnAction(e -> {
 			tStatus.setText("");
-			tConnectStatus.setText("disconnected");
+			tConnectStatus.setText("Disconnected");
 			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
 			buttonReg.setDisable(false);
 			pfURL.setDisable(false);
@@ -341,13 +341,13 @@ public class BusyLightAD extends Application {
 					if (response.getStatus() != 200) {
 						if (response.getStatus() == 401) {
 							tStatus.setFill(javafx.scene.paint.Color.RED);
-							tConnectStatus.setText("disconnected");
+							tConnectStatus.setText("Disconnected");
 							tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);							
 							tStatus.setText("invalid token");
 							//System.err.println("invalid token");
 						}
 					} else {
-						tConnectStatus.setText("connected");
+						tConnectStatus.setText("Connected");
 						tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);							
 						String json = response.readEntity(String.class);
 						if (!json.equalsIgnoreCase(currentJson)) {
@@ -368,7 +368,7 @@ public class BusyLightAD extends Application {
 					circle.setFill(Color.GRAY);
 					tStatus.setFill(javafx.scene.paint.Color.RED);
 					tStatus.setText("lost remote connection");
-					tConnectStatus.setText("disconnected");
+					tConnectStatus.setText("Disconnected");
 					tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
 					if (blinkTimeline != null) {
 						blinkTimeline.stop();
@@ -455,11 +455,11 @@ public class BusyLightAD extends Application {
 					System.out.println("in here");
 					tStatus.setFill(javafx.scene.paint.Color.RED);
 					tStatus.setText("invalid token");
-					tConnectStatus.setText("disconnected");
+					tConnectStatus.setText("Disconnected");
 					tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);						
 				}
 			} else {
-				tConnectStatus.setText("connected");
+				tConnectStatus.setText("Connected");
 				tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);						
 				if (!json.equalsIgnoreCase(currentJson)) {
 					processResponse(json);
@@ -472,14 +472,14 @@ public class BusyLightAD extends Application {
 			bRegistered = false;
 			tStatus.setFill(javafx.scene.paint.Color.RED);
 			tStatus.setText("cannot reach server");
-			tConnectStatus.setText("disconnected");
+			tConnectStatus.setText("Disconnected");
 			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);				
 		}
 
 		//if registration is good, start the polling
 		if (bRegistered) {
 			buttonStop.setDisable(false);
-			tConnectStatus.setText("connected");
+			tConnectStatus.setText("Connected");
 			tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);
 			pollTimeline.setCycleCount(Timeline.INDEFINITE);
 			pollTimeline.play();

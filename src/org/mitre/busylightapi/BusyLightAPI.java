@@ -21,7 +21,7 @@ public class BusyLightAPI implements HidServicesListener {
 	private static int[] products = new int[]{ 0x3BCD, 0x3BCA, 0x3BCB, 0x3BCC, 0x3BC0 };
 
 	//colors
-	public static enum BLColor { RED, GREEN, BLUE, ORANGE, YELLOW, PINK, AQUA, WHITE };
+	public static enum BLColor { RED, GREEN, BLUE, ORANGE, YELLOW, PINK, AQUA, WHITE, INDIGO, VIOLET };
 	private static short[][] colors = new short[][] {
 		{0x64, 0x00, 0x00},
 		{0x00, 0x64, 0x00},
@@ -30,7 +30,9 @@ public class BusyLightAPI implements HidServicesListener {
 		{0x64, 0x64, 0x00},
 		{0x64, 0x00, 0x64},
 		{0x00, 0x64, 0x64},
-		{0x64, 0x64, 0x64}
+		{0x64, 0x64, 0x64},
+		{29,0,51},
+		{93,51,93}
 	};
 
 	//sounds
@@ -57,21 +59,15 @@ public class BusyLightAPI implements HidServicesListener {
 		light.detectBusyLight();
 		light.initDevice(Vendor.PLENOM, Product.PRODUCT_OMEGA_ID, null);
 
+		//light.ping(); Thread.sleep(3000);
+
+		light.rainbow(); Thread.sleep(3000);
+		
+		//light.steadyColor(BLColor.VIOLET); Thread.sleep(3000);
+		
+		
+
 		light.stop();
-		//light.steadyColor(BLColor.BLUE);
-		//light.steadyColor( 0,191, 55 ); //RGB hex color: deepskyblue
-		//light.steadyColor( 233,150,122 ); //RGB hex color: darksalmon
-		//light.steadyColor( 178,34,34 ); //RGB hex color: firebrick
-		light.steadyColor( 255,215,0 ); //RGB hex color: gold
-
-
-		KeepAliveThread kathread = new KeepAliveThread("kat",light);
-		kathread.start();
-
-		System.out.println("Stopping thread.");
-		kathread.interrupt();
-
-
 		light.shutdown();
 		System.out.println("done.");
 	}
@@ -172,6 +168,8 @@ public class BusyLightAPI implements HidServicesListener {
 
 		//keep alive
 		if (kaThread != null && !kaThread.isAlive()) {
+			kaThread.interrupt();
+			kaThread = new KeepAliveThread("kat", this);
 			kaThread.start();
 		}
 	}	
@@ -237,6 +235,8 @@ public class BusyLightAPI implements HidServicesListener {
 
 		//keep alive
 		if (kaThread != null && !kaThread.isAlive()) {
+			kaThread.interrupt();
+			kaThread = new KeepAliveThread("kat", this);
 			kaThread.start();
 		}
 	}	
@@ -411,6 +411,8 @@ public class BusyLightAPI implements HidServicesListener {
 
 		//keep alive
 		if (kaThread != null && !kaThread.isAlive()) {
+			kaThread.interrupt();
+			kaThread = new KeepAliveThread("kat", this);
 			kaThread.start();
 		}
 	}	
@@ -487,6 +489,8 @@ public class BusyLightAPI implements HidServicesListener {
 
 		//keep alive
 		if (kaThread != null && !kaThread.isAlive()) {
+			kaThread.interrupt();
+			kaThread = new KeepAliveThread("kat", this);
 			kaThread.start();
 		}
 	}		
@@ -516,6 +520,29 @@ public class BusyLightAPI implements HidServicesListener {
 		}
 		return true; //device successfully initialized
 	}	
+
+	public void ping() {
+		new PingThread("pingthread",this).start();
+	}
+
+	public void rainbow() {
+		//light.ping(); Thread.sleep(3000);
+		long ms = 75;
+
+		try {
+			steadyColor(BLColor.RED); Thread.sleep(ms);
+			steadyColor(BLColor.ORANGE); Thread.sleep(ms);
+			steadyColor(BLColor.YELLOW); Thread.sleep(ms);
+			steadyColor(BLColor.GREEN); Thread.sleep(ms);
+			steadyColor(BLColor.BLUE); Thread.sleep(ms);
+			steadyColor(BLColor.INDIGO); Thread.sleep(ms);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		stop();
+	}
 
 	public void shutdown() {
 		if (kaThread != null) {
@@ -584,8 +611,31 @@ public class BusyLightAPI implements HidServicesListener {
 		ret[1] = (short)Math.round( (g / 255.0) * 100 );
 		ret[2] = (short)Math.round( (b / 255.0) * 100 );
 
+		//System.out.println(ret[0] + "," + ret[1] + "," + ret[2]);
+		
 		return ret;
 	}
+
+	class PingThread extends Thread {
+
+		private BusyLightAPI theLight;
+
+		public PingThread(String name, BusyLightAPI light) {
+			super(name);
+			theLight = light;
+		}
+
+		@Override
+		public void run() {
+			theLight.steadyColor(BLColor.GREEN);
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+			}
+			theLight.stop();
+		}
+	}	
+
 }
 
 class KeepAliveThread extends Thread {
@@ -612,3 +662,5 @@ class KeepAliveThread extends Thread {
 		}
 	}
 }
+
+
