@@ -49,7 +49,7 @@ public class BusyLightAPI implements HidServicesListener {
 	private KeepAliveThread kaThread;
 
 	public BusyLightAPI() {
-		kaThread = new KeepAliveThread("kat", this);
+		kaThread = new KeepAliveThread("kat");
 		initHidServices();
 	}
 
@@ -59,15 +59,12 @@ public class BusyLightAPI implements HidServicesListener {
 		light.detectBusyLight();
 		light.initDevice(Vendor.PLENOM, Product.PRODUCT_OMEGA_ID, null);
 
-		//light.ping(); Thread.sleep(3000);
+		//test
+		light.rainbow(); 
+		System.out.println("Sleeping for 3 seconds...");
+		Thread.sleep(3000);
 
-		light.rainbow(); Thread.sleep(3000);
-		
-		//light.steadyColor(BLColor.VIOLET); Thread.sleep(3000);
-		
-		
-
-		light.stop();
+		light.stopLight();
 		light.shutdown();
 		System.out.println("done.");
 	}
@@ -81,7 +78,6 @@ public class BusyLightAPI implements HidServicesListener {
 					ret[0] = getVendorIndex(hidDevice.getVendorId());
 					ret[1] = getProductIndex(hidDevice.getProductId());
 				}
-
 			}
 		}
 		return ret;
@@ -143,34 +139,13 @@ public class BusyLightAPI implements HidServicesListener {
 				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x06, 0x93  //last two bytes are the MSB and LSB of the 16-bit checksum
 		}; 
 
-		//calculate checksum
-		int checksum = 0;
-		for (int i=0; i < 62; i++)
-			checksum += message[i];
-
-		//add checksum value
-		int msb = checksum >> 8;
-		int lsb = checksum & 0x00FF;
-		message[62] = (short)msb;
-		message[63] = (short)lsb;
-
-		//convert to byte array
-		byte[] message2 = new byte[message.length];
-		for (int i=0; i < message.length; i++)
-			message2[i] = (byte)message[i];
-
-		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
-		if (val >= 0) {
-			//System.out.println("rc: " + val );
-		} else {
-			System.err.println("error: " + hidDevice.getLastErrorMessage());
-		}
-
-		//keep alive
-		if (kaThread != null && !kaThread.isAlive()) {
-			kaThread.interrupt();
-			kaThread = new KeepAliveThread("kat", this);
-			kaThread.start();
+		if (sendBytes(message)) {
+			//keep alive
+			if (kaThread != null && !kaThread.isAlive()) {
+				kaThread.interrupt();
+				kaThread = new KeepAliveThread("kat");
+				kaThread.start();
+			}
 		}
 	}	
 
@@ -210,34 +185,13 @@ public class BusyLightAPI implements HidServicesListener {
 				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x06, 0x93  //last two bytes are the MSB and LSB of the 16-bit checksum
 		}; 
 
-		//calculate checksum
-		int checksum = 0;
-		for (int i=0; i < 62; i++)
-			checksum += message[i];
-
-		//add checksum value
-		int msb = checksum >> 8;
-		int lsb = checksum & 0x00FF;
-		message[62] = (short)msb;
-		message[63] = (short)lsb;
-
-		//convert to byte array
-		byte[] message2 = new byte[message.length];
-		for (int i=0; i < message.length; i++)
-			message2[i] = (byte)message[i];
-
-		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
-		if (val >= 0) {
-			//System.out.println("rc: " + val );
-		} else {
-			System.err.println("error: " + hidDevice.getLastErrorMessage());
-		}
-
-		//keep alive
-		if (kaThread != null && !kaThread.isAlive()) {
-			kaThread.interrupt();
-			kaThread = new KeepAliveThread("kat", this);
-			kaThread.start();
+		if (sendBytes(message)) {
+			//keep alive
+			if (kaThread != null && !kaThread.isAlive()) {
+				kaThread.interrupt();
+				kaThread = new KeepAliveThread("kat");
+				kaThread.start();
+			}
 		}
 	}	
 
@@ -265,31 +219,13 @@ public class BusyLightAPI implements HidServicesListener {
 				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00  //last two bytes are the MSB and LSB of the 16-bit checksum
 		}; 
 
-		//calculate checksum
-		int checksum = 0;
-		for (int i=0; i < 62; i++)
-			checksum += message[i];
-
-		//add checksum value
-		int msb = checksum >> 8;
-		int lsb = checksum & 0x00FF;
-		message[62] = (short)msb;
-		message[63] = (short)lsb;
-
-		//convert to byte array
-		byte[] message2 = new byte[message.length];
-		for (int i=0; i < message.length; i++)
-			message2[i] = (byte)message[i];
-
-		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
-		if (val >= 0) {
-			//System.out.println("rc: " + val );
-		} else {
-			System.err.println("error: " + hidDevice.getLastErrorMessage());
+		if (!sendBytes(message)) {
+			System.err.println("keepAlive failed");
 		}
+
 	}
 
-	public void stop() {
+	public void stopLight() {
 
 		//stop the keep alive thread if it exists
 		if (kaThread != null && kaThread.isAlive()) {
@@ -316,27 +252,8 @@ public class BusyLightAPI implements HidServicesListener {
 				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x06, 0x93  //last two bytes are the MSB and LSB of the 16-bit checksum
 		}; 
 
-		//calculate checksum
-		int checksum = 0;
-		for (int i=0; i < 62; i++)
-			checksum += message[i];
-
-		//add checksum value
-		int msb = checksum >> 8;
-		int lsb = checksum & 0x00FF;
-		message[62] = (short)msb;
-		message[63] = (short)lsb;
-
-		//convert to byte array
-		byte[] message2 = new byte[message.length];
-		for (int i=0; i < message.length; i++)
-			message2[i] = (byte)message[i];
-
-		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
-		if (val >= 0) {
-			//System.out.println("rc: " + val );
-		} else {
-			System.err.println("error: " + hidDevice.getLastErrorMessage());
+		if (!sendBytes(message)) {
+			System.err.println("stop failed");
 		}
 	}	
 
@@ -386,34 +303,13 @@ public class BusyLightAPI implements HidServicesListener {
 				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x06, 0x93  //last two bytes are the MSB and LSB of the 16-bit checksum
 		}; 
 
-		//calculate checksum
-		int checksum = 0;
-		for (int i=0; i < 62; i++)
-			checksum += message[i];
-
-		//add checksum value
-		int msb = checksum >> 8;
-		int lsb = checksum & 0x00FF;
-		message[62] = (short)msb;
-		message[63] = (short)lsb;
-
-		//convert to byte array
-		byte[] message2 = new byte[message.length];
-		for (int i=0; i < message.length; i++)
-			message2[i] = (byte)message[i];
-
-		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
-		if (val >= 0) {
-			//System.out.println("rc: " + val );
-		} else {
-			System.err.println("error: " + hidDevice.getLastErrorMessage());
-		}
-
-		//keep alive
-		if (kaThread != null && !kaThread.isAlive()) {
-			kaThread.interrupt();
-			kaThread = new KeepAliveThread("kat", this);
-			kaThread.start();
+		if (sendBytes(message)) {
+			//keep alive
+			if (kaThread != null && !kaThread.isAlive()) {
+				kaThread.interrupt();
+				kaThread = new KeepAliveThread("kat");
+				kaThread.start();
+			}
 		}
 	}	
 
@@ -464,34 +360,13 @@ public class BusyLightAPI implements HidServicesListener {
 				0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x06, 0x93  //last two bytes are the MSB and LSB of the 16-bit checksum
 		}; 
 
-		//calculate checksum
-		int checksum = 0;
-		for (int i=0; i < 62; i++)
-			checksum += message[i];
-
-		//add checksum value
-		int msb = checksum >> 8;
-		int lsb = checksum & 0x00FF;
-		message[62] = (short)msb;
-		message[63] = (short)lsb;
-
-		//convert to byte array
-		byte[] message2 = new byte[message.length];
-		for (int i=0; i < message.length; i++)
-			message2[i] = (byte)message[i];
-
-		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
-		if (val >= 0) {
-			//System.out.println("rc: " + val );
-		} else {
-			System.err.println("error: " + hidDevice.getLastErrorMessage());
-		}
-
-		//keep alive
-		if (kaThread != null && !kaThread.isAlive()) {
-			kaThread.interrupt();
-			kaThread = new KeepAliveThread("kat", this);
-			kaThread.start();
+		if (sendBytes(message)) {
+			//keep alive
+			if (kaThread != null && !kaThread.isAlive()) {
+				kaThread.interrupt();
+				kaThread = new KeepAliveThread("kat");
+				kaThread.start();
+			}
 		}
 	}		
 
@@ -522,11 +397,10 @@ public class BusyLightAPI implements HidServicesListener {
 	}	
 
 	public void ping() {
-		new PingThread("pingthread",this).start();
+		new PingThread("pingthread").start();
 	}
 
 	public void rainbow() {
-		//light.ping(); Thread.sleep(3000);
 		long ms = 75;
 
 		try {
@@ -541,7 +415,7 @@ public class BusyLightAPI implements HidServicesListener {
 			e.printStackTrace();
 		}
 
-		stop();
+		stopLight();
 	}
 
 	public void shutdown() {
@@ -603,7 +477,7 @@ public class BusyLightAPI implements HidServicesListener {
 		short[] ret = new short[]{0,0,0};
 
 		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
-			System.err.println("BusyLightAPI:convertHexToPWM() - error: invalid RGB value(s): " + r + " , " + g + " , " + b);
+			System.err.println("jbusylightapi:convertHexToPWM() - error: invalid RGB value(s): " + r + " , " + g + " , " + b);
 			return ret;
 		}
 
@@ -612,55 +486,84 @@ public class BusyLightAPI implements HidServicesListener {
 		ret[2] = (short)Math.round( (b / 255.0) * 100 );
 
 		//System.out.println(ret[0] + "," + ret[1] + "," + ret[2]);
-		
+
 		return ret;
 	}
 
-	class PingThread extends Thread {
+	public boolean sendBytes(short[] message) {
 
-		private BusyLightAPI theLight;
-
-		public PingThread(String name, BusyLightAPI light) {
-			super(name);
-			theLight = light;
+		if (message == null) {
+			System.err.println("message is null");
+			return false;
 		}
 
+		if (message.length != 64) {
+			System.err.println("message is not length 64");
+			return false;			
+		}
+
+		//calculate checksum
+		int checksum = 0;
+		for (int i=0; i < 62; i++)
+			checksum += message[i];
+
+		//add checksum value
+		int msb = checksum >> 8;
+		int lsb = checksum & 0x00FF;
+		message[62] = (short)msb;
+		message[63] = (short)lsb;
+
+		//convert to byte array
+		byte[] message2 = new byte[message.length];
+		for (int i=0; i < message.length; i++)
+			message2[i] = (byte)message[i];
+
+		int val = hidDevice.write(message2, PACKET_LENGTH, (byte) 0x00);
+		if (val >= 0) {
+			//good
+			return true;
+		} else {
+			System.err.println("error: " + hidDevice.getLastErrorMessage());
+			return false;
+		}		
+	}
+
+	class PingThread extends Thread {
+		public PingThread(String name) {
+			super(name);
+		}
 		@Override
 		public void run() {
-			theLight.steadyColor(BLColor.GREEN);
+			steadyColor(BLColor.GREEN);
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
 			}
-			theLight.stop();
+			stopLight();
 		}
-	}	
-
-}
-
-class KeepAliveThread extends Thread {
-
-	private static final int FREQUENCY_SECS = 8;
-	private boolean bAlive;
-	private BusyLightAPI theLight;
-
-	public KeepAliveThread(String name, BusyLightAPI light) {
-		super(name);
-		bAlive = true;
-		theLight = light;
 	}
 
-	@Override
-	public void run() {
-		while (bAlive) {
-			theLight.keepAlive();
-			try {
-				Thread.sleep(FREQUENCY_SECS * 1000);
-			} catch (InterruptedException e) {
-				bAlive = false;
+	class KeepAliveThread extends Thread {
+		private static final int FREQUENCY_SECS = 8;
+		private boolean bAlive;
+		public KeepAliveThread(String name) {
+			super(name);
+			bAlive = true;
+		}
+		@Override
+		public void run() {
+			while (bAlive) {
+				keepAlive();
+				try {
+					Thread.sleep(FREQUENCY_SECS * 1000);
+				} catch (InterruptedException e) {
+					bAlive = false;
+				}
 			}
 		}
-	}
+	}	
 }
+
+
 
 

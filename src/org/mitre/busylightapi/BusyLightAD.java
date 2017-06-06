@@ -207,7 +207,7 @@ public class BusyLightAD extends Application {
 				stopTimeline.stop();
 			}
 			if (light != null) {
-				light.stop();
+				light.stopLight();
 				light.shutdown();
 			}
 			currentJson = "";
@@ -231,7 +231,7 @@ public class BusyLightAD extends Application {
 			@Override
 			public void handle(ActionEvent event) {
 				if (light != null) {
-					light.stop();
+					light.stopLight();
 					light.shutdown();
 				}			
 
@@ -257,7 +257,7 @@ public class BusyLightAD extends Application {
 			tStatus.setText("");
 			detectBusylight();			
 			if (light != null) {
-				light.stop();
+				light.stopLight();
 				light.shutdown();
 			}
 
@@ -364,7 +364,7 @@ public class BusyLightAD extends Application {
 					}					
 					response.close();
 				} catch (ProcessingException e1) {
-					light.stop();
+					light.stopLight();
 					circle.setFill(Color.GRAY);
 					tStatus.setFill(javafx.scene.paint.Color.RED);
 					tStatus.setText("lost remote connection");
@@ -498,7 +498,7 @@ public class BusyLightAD extends Application {
 
 		if (light != null) {
 			detectBusylight();			
-			light.stop();
+			light.stopLight();
 			light.shutdown();
 
 			if (blinkTimeline != null) {
@@ -518,7 +518,7 @@ public class BusyLightAD extends Application {
 		try {
 			JSONObject o = new JSONObject(json);
 			if (o.getBoolean("stop")) {
-				light.stop();
+				light.stopLight();
 				blinkTimeline.stop();
 				circle.setFill(Color.GRAY);
 				circleBlinkOn = false;
@@ -559,7 +559,7 @@ public class BusyLightAD extends Application {
 
 	public void shutdown() {
 		if (light != null) {
-			light.stop();
+			light.stopLight();
 			light.shutdown();
 			light = null;
 		}

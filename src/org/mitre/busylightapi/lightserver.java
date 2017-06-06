@@ -199,7 +199,7 @@ public class lightserver extends Application {
 			System.out.println("shutting down...");
 			if (hasLight) {
 				if (light != null) {
-					light.stop();
+					light.stopLight();
 					light.shutdown();
 				}
 			}
@@ -231,8 +231,8 @@ public class lightserver extends Application {
 		cbVendor.getSelectionModel().select(ret[0]);
 		cbProduct.getSelectionModel().select(ret[1]);	
 		tStatus.setText("BusyLight detected");
-		*/
-		
+		 */
+
 		tStatus.setFill(javafx.scene.paint.Color.BLUE);			
 
 		//start the server
@@ -255,7 +255,7 @@ public class lightserver extends Application {
 
 		stage.show();
 		stage.requestFocus();			
-		
+
 		blinkTimeline = new Timeline(new KeyFrame(Duration.millis(300), new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -285,7 +285,7 @@ public class lightserver extends Application {
 				if ( (System.currentTimeMillis() - lastHeard) / 1000 > TIMEOUT_SECS) {
 					circle.setFill(Color.GRAY);
 					if (hasLight) {
-						light.stop();
+						light.stopLight();
 					}
 					blinkTimeline.stop();
 					tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
@@ -322,7 +322,7 @@ public class lightserver extends Application {
 					String s ="Unable to connect to light. Make sure the program is not already running.";
 					alert.setContentText(s);
 					alert.showAndWait();
-					
+
 					light = null;
 					hasLight = false;
 					//shutdown();
@@ -399,7 +399,7 @@ public class lightserver extends Application {
 		buttonTest.setDisable(false);
 		if (hasLight) {
 			if (light != null) {
-				light.stop();
+				light.stopLight();
 			}
 		}
 		if (server != null)
@@ -423,7 +423,7 @@ public class lightserver extends Application {
 	public void shutdown() {
 		System.out.println("shutting down...");
 		if (light != null) {
-			light.stop();
+			light.stopLight();
 			light.shutdown();
 			light = null;
 		}
@@ -461,6 +461,17 @@ public class lightserver extends Application {
 		@Override
 		public void handle(HttpExchange t) throws IOException {
 
+			//turn away any requests we don't expect
+			if (!t.getRequestMethod().equalsIgnoreCase("post") || !t.getRequestURI().toString().equalsIgnoreCase("/setbusylight")) {
+				//invalid request
+				String response = "";
+				t.sendResponseHeaders(400, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();	
+				return;
+			}
+			
 			InputStreamReader isr =  new InputStreamReader(t.getRequestBody(),"utf-8");
 			BufferedReader br = new BufferedReader(isr);
 			int bte;
@@ -483,7 +494,7 @@ public class lightserver extends Application {
 				tAgentStatus.setText(o.getString("status"));
 				if (o.getBoolean("stop")) {
 					if (hasLight)
-						light.stop();
+						light.stopLight();
 					blinkTimeline.stop();
 					circle.setFill(Color.GRAY);
 					circleBlinkOn = false;					
@@ -517,7 +528,7 @@ public class lightserver extends Application {
 				//e.printStackTrace();
 				System.err.println(e.getMessage());
 				if (hasLight)
-					light.stop();
+					light.stopLight();
 				blinkTimeline.stop();
 				tConnectStatus.setFill(javafx.scene.paint.Color.RED);
 				tConnectStatus.setText("Error");

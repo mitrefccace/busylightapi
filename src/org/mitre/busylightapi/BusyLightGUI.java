@@ -223,7 +223,7 @@ public class BusyLightGUI extends Application {
 		button.setOnAction(e -> {
 			status.setText("");
 			if (light != null) {
-				light.stop();
+				light.stopLight();
 				light.shutdown();
 			}
 			light = new BusyLightAPI();
@@ -258,7 +258,7 @@ public class BusyLightGUI extends Application {
 		buttonStop.setOnAction(e -> {
 			status.setText("");
 			if (light != null)
-				light.stop();
+				light.stopLight();
 		});	
 		gp4.add(buttonStop,  1, 0);
 
@@ -267,7 +267,7 @@ public class BusyLightGUI extends Application {
 		Button buttone = new Button("Exit");
 		buttone.setOnAction(e -> {
 			if (light != null) {
-				light.stop();
+				light.stopLight();
 				light.shutdown();
 				light = null;
 			}
@@ -284,7 +284,7 @@ public class BusyLightGUI extends Application {
 		stage.setScene(scene);
 		stage.setOnCloseRequest(e -> {
 			if (light != null) {
-				light.stop();
+				light.stopLight();
 				light.shutdown();
 				light = null;
 			}			
