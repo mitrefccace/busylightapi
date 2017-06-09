@@ -2,10 +2,17 @@ package org.mitre.busylightapi;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
 import org.json.JSONObject;
 import org.mitre.busylightapi.BusyLightAPI.Product;
 import org.mitre.busylightapi.BusyLightAPI.Vendor;
@@ -13,6 +20,9 @@ import org.mitre.busylightapi.BusyLightAPI.Vendor;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.HttpsServer;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -236,6 +246,7 @@ public class lightserver extends Application {
 		tStatus.setFill(javafx.scene.paint.Color.BLUE);			
 
 		//start the server
+		/*
 		try {
 			server = HttpServer.create(new InetSocketAddress("localhost",port), 0);
 			server.createContext(sPath, new MyHandler());
@@ -251,7 +262,25 @@ public class lightserver extends Application {
 			alert.showAndWait();
 			shutdown();
 			System.exit(-1);
-		}		
+		}
+		 */
+		server = getHttpsServer();
+		if (server == null) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.initModality(Modality.APPLICATION_MODAL);
+			alert.setTitle("Error");
+			alert.setHeaderText("Server Error");
+			String s ="Unable to start the server. Make sure the program is not already running.";
+			alert.setContentText(s);
+			alert.showAndWait();
+			shutdown();
+			System.exit(-1);			
+		} else {
+			server.createContext(sPath, new MyHandler());
+			server.createContext("/", new MyHandler());
+			server.start();
+			System.out.println("I live to serve: " + "https://localhost:" + port + sPath);
+		}
 
 		stage.show();
 		stage.requestFocus();			
@@ -284,7 +313,7 @@ public class lightserver extends Application {
 			public void handle(ActionEvent event) {	
 				if ( (System.currentTimeMillis() - lastHeard) / 1000 > TIMEOUT_SECS) {
 					circle.setFill(Color.GRAY);
-					if (hasLight) {
+					if (hasLight && light != null) {
 						light.stopLight();
 					}
 					blinkTimeline.stop();
@@ -332,6 +361,8 @@ public class lightserver extends Application {
 		}
 		detectBusylight();
 
+		//start the server
+		/*
 		try {
 			server = HttpServer.create(new InetSocketAddress("localhost",port), 0);
 			server.createContext(sPath, new MyHandler());
@@ -347,6 +378,22 @@ public class lightserver extends Application {
 			tConnectStatus.setText("Stopped");
 			tAgentStatus.setText("Unknown");
 		}
+		 */
+		server = getHttpsServer();
+		if (server == null) {
+			buttonStart.setDisable(false);
+			buttonStop.setDisable(true);
+			buttonTest.setDisable(true);
+			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
+			tConnectStatus.setText("Stopped");
+			tAgentStatus.setText("Unknown");			
+		} else {
+			server.createContext(sPath, new MyHandler());
+			server.createContext("/", new MyHandler());
+			server.start();
+			System.out.println("I live to serve: " + "https://localhost:" + port + sPath);
+		}
+
 		timeoutTimeline.play();
 	}	
 
@@ -385,7 +432,7 @@ public class lightserver extends Application {
 		stopTimeline.setCycleCount(1);
 		stopTimeline.play();		
 
-		if (hasLight) {
+		if (hasLight && light != null) {
 			//light.ping();
 			light.rainbow();
 		}
@@ -409,8 +456,8 @@ public class lightserver extends Application {
 		}
 
 		blinkTimeline.stop();
-		timeoutTimeline.stop();
-		timeoutTimeline.stop();
+		stopTimeline.stop();
+		timeoutTimeline.stop();	
 		circle.setFill(Color.GRAY);
 		circleBlinkOn = false;		
 
@@ -457,9 +504,97 @@ public class lightserver extends Application {
 		}
 	}
 
+	public HttpsServer getHttpsServer() {
+		HttpsServer server = null;
+
+		// load certificate
+		InputStream is = lightserver.class.getResourceAsStream("light.jks");
+		String s = "      ";
+		char[] storepass = s.toCharArray();
+		char[] keypass = s.toCharArray();
+		String alias = "busylight";
+		try {
+			KeyStore keystore = KeyStore.getInstance("JKS");
+			keystore.load(is, storepass);
+
+			// display certificate
+			Certificate cert = keystore.getCertificate(alias);
+
+			// setup the key manager factory
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+			kmf.init(keystore, keypass);
+			// setup the trust manager factory
+			TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+			tmf.init(keystore);
+
+			// create https server
+			server = HttpsServer.create(new InetSocketAddress("localhost",port), 0);
+			// create ssl context
+			SSLContext sslContext = SSLContext.getInstance("TLS");
+			// setup the HTTPS context and parameters
+			sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+			server.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
+				public void configure(HttpsParameters params) {
+					try {
+						// initialise the SSL context
+						SSLContext c = SSLContext.getDefault();
+						SSLEngine engine = c.createSSLEngine();
+						params.setNeedClientAuth(false);
+						params.setCipherSuites(engine.getEnabledCipherSuites());
+						params.setProtocols(engine.getEnabledProtocols());
+						// get the default parameters
+						SSLParameters defaultSSLParameters = c.getDefaultSSLParameters();
+						params.setSSLParameters(defaultSSLParameters);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						System.out.println("Failed to create HTTPS server");
+					}
+				}
+			});			
+
+			is.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			server = null;
+		}
+
+		return server;
+
+	}
+
 	class MyHandler implements HttpHandler {
 		@Override
 		public void handle(HttpExchange t) throws IOException {
+
+			//ping
+			if (t.getRequestMethod().equalsIgnoreCase("get")) {
+				//send any response
+				String response = "";
+				response += "<!DOCTYPE html>";
+				response += "<html>";
+				response += "<head>";
+				response += "<title></title>";
+				response += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
+				response += "<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>";
+				response += "</head>";
+				response += "<body>";
+				response += "<table style='width:100%'>";
+				response += "<tr>";
+				response += "<td align='center'><h3>BusyLight access granted.</h3></td>";
+				response += "</tr>";
+				response += "<tr>";
+				response += "<td align='center'><i class='fa fa-check' style='font-size:48px;color:green'></i></td>";
+				response += "</tr>";
+				response += "</table>";
+				response += "</body>";
+				response += "</html>"; 				
+
+				t.sendResponseHeaders(200, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
+			}
 
 			//turn away any requests we don't expect
 			if (!t.getRequestMethod().equalsIgnoreCase("post") || !t.getRequestURI().toString().equalsIgnoreCase("/setbusylight")) {
@@ -471,7 +606,7 @@ public class lightserver extends Application {
 				os.close();	
 				return;
 			}
-			
+
 			InputStreamReader isr =  new InputStreamReader(t.getRequestBody(),"utf-8");
 			BufferedReader br = new BufferedReader(isr);
 			int bte;
@@ -493,7 +628,7 @@ public class lightserver extends Application {
 				JSONObject o = new JSONObject(json.toString());
 				tAgentStatus.setText(o.getString("status"));
 				if (o.getBoolean("stop")) {
-					if (hasLight)
+					if (hasLight && light != null)
 						light.stopLight();
 					blinkTimeline.stop();
 					circle.setFill(Color.GRAY);
@@ -504,7 +639,7 @@ public class lightserver extends Application {
 					int b = o.getInt("b");
 					if (o.getBoolean("blink")) {
 						//blink
-						if (hasLight)
+						if (hasLight && light != null)
 							light.blinkColor(r,g,b, 5, 1);
 						if (blinkTimeline != null) {
 							blinkTimeline.stop();
@@ -514,7 +649,7 @@ public class lightserver extends Application {
 						}					
 					} else {
 						//solid
-						if (hasLight)
+						if (hasLight && light != null)
 							light.steadyColor(r,g,b);
 						circle.setFill(Color.rgb(r,g,b));					
 					}
@@ -526,8 +661,9 @@ public class lightserver extends Application {
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				//e.printStackTrace();
-				System.err.println(e.getMessage());
-				if (hasLight)
+				System.err.println("error: " + e.getMessage());
+				e.printStackTrace();
+				if (hasLight && light != null)
 					light.stopLight();
 				blinkTimeline.stop();
 				tConnectStatus.setFill(javafx.scene.paint.Color.RED);
