@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
-import java.security.cert.Certificate;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -369,7 +368,6 @@ public class lightserver extends Application {
 			System.out.println("I live to serve: " + "http://localhost:" + port + sPath);
 			server.start();			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			buttonStart.setDisable(false);
 			buttonStop.setDisable(true);
@@ -512,13 +510,10 @@ public class lightserver extends Application {
 		String s = "      ";
 		char[] storepass = s.toCharArray();
 		char[] keypass = s.toCharArray();
-		String alias = "busylight";
+
 		try {
 			KeyStore keystore = KeyStore.getInstance("JKS");
 			keystore.load(is, storepass);
-
-			// display certificate
-			Certificate cert = keystore.getCertificate(alias);
 
 			// setup the key manager factory
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
@@ -554,7 +549,6 @@ public class lightserver extends Application {
 
 			is.close();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			server = null;
 		}
@@ -659,8 +653,6 @@ public class lightserver extends Application {
 				tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);
 				tConnectStatus.setText("Running");
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				//e.printStackTrace();
 				System.err.println("error: " + e.getMessage());
 				e.printStackTrace();
 				if (hasLight && light != null)
