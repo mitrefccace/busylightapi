@@ -1,6 +1,14 @@
 # BusyLightAD
 
-This is an ACE Direct interface to the BusyLight device. The BusyLightAD program is a GUI for integrating a BusyLight with the ACE Direct platform. This is part of the busylightapi Java Eclipse project.
+This is an ACE Direct interface to the BusyLight device. There are two options: _BusyLightAD_ and _lightserver_. 
+
+## BusyLightAD
+
+The BusyLightAD program is a GUI for integrating a BusyLight with the ACE Direct platform. This is part of the busylightapi Java Eclipse project. BusyLightAD requires a URL from the ACE Direct agent portal. This is how it establishes a connection to ACE Direct. _This will soon be replaced by lightserver._
+
+## lightserver
+
+The lightserver program is another GUI for integrating a BusyLight with the ACE Direct platform. This is part of the busylightapi Java Eclipse project. The lightserver application runs a server on localhost, and it is only available locally on the agent's desktop computer. The ACE Direct portal makes the initial connection to lightserver, and all requests to localhost will work after that. This is an improvement on the BusyLightAD program, since a unique URL is not required.
 
 ### Requirements
 
@@ -33,12 +41,13 @@ This is an ACE Direct interface to the BusyLight device. The BusyLightAD program
 
 ### Installation and Configuration
 
-From Eclipse, build a runnable JAR file for the BusyLightAD class.
+From Eclipse, build a runnable JAR file for the BusyLightAD or lightserver class.
 
 ### Running
 
 ```java
-java -jar busylightad.jar
+java -jar busylightad.jar _or_
+java -jar lightserver.jar 
 ```
 
 

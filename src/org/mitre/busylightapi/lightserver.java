@@ -205,64 +205,11 @@ public class lightserver extends Application {
 
 		stage.setScene(scene);
 		stage.setOnCloseRequest(e -> {
-			System.out.println("shutting down...");
-			if (hasLight) {
-				if (light != null) {
-					light.stopLight();
-					light.shutdown();
-				}
-			}
-			server.stop(0);
-			Platform.exit();
+			shutdown();
 		});
-
-		//init the light
-		/*
-		light = new BusyLightAPI();
-		int[] ret = light.detectBusyLight();
-		if (ret[0] != -1 && ret[1] != -1) {
-			boolean bRet = light.initDevice(Vendor.values()[ret[0]] , Product.values()[ret[1]] , null);
-			if (!bRet) {
-				Alert alert = new Alert(AlertType.ERROR);
-				alert.initModality(Modality.APPLICATION_MODAL);
-				alert.setTitle("Error");
-				alert.setHeaderText("Light Error");
-				String s ="Unable to connect to light. Make sure the program is not already running.";
-				alert.setContentText(s);
-				alert.showAndWait();
-
-				light = null;
-				hasLight = false;
-				//shutdown();
-				//System.exit(-1);
-			}
-		}
-		cbVendor.getSelectionModel().select(ret[0]);
-		cbProduct.getSelectionModel().select(ret[1]);	
-		tStatus.setText("BusyLight detected");
-		 */
 
 		tStatus.setFill(javafx.scene.paint.Color.BLUE);			
 
-		//start the server
-		/*
-		try {
-			server = HttpServer.create(new InetSocketAddress("localhost",port), 0);
-			server.createContext(sPath, new MyHandler());
-			System.out.println("I live to serve: " + "http://localhost:" + port + sPath);
-			server.start();
-		} catch (Exception e) {
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.initModality(Modality.APPLICATION_MODAL);
-			alert.setTitle("Error");
-			alert.setHeaderText("Server Error");
-			String s ="Unable to start the server. Make sure the program is not already running.";
-			alert.setContentText(s);
-			alert.showAndWait();
-			shutdown();
-			System.exit(-1);
-		}
-		 */
 		server = getHttpsServer();
 		if (server == null) {
 			Alert alert = new Alert(AlertType.ERROR);
@@ -360,23 +307,6 @@ public class lightserver extends Application {
 		}
 		detectBusylight();
 
-		//start the server
-		/*
-		try {
-			server = HttpServer.create(new InetSocketAddress("localhost",port), 0);
-			server.createContext(sPath, new MyHandler());
-			System.out.println("I live to serve: " + "http://localhost:" + port + sPath);
-			server.start();			
-		} catch (IOException e) {
-			e.printStackTrace();
-			buttonStart.setDisable(false);
-			buttonStop.setDisable(true);
-			buttonTest.setDisable(true);
-			tConnectStatus.setFill(javafx.scene.paint.Color.GRAY);
-			tConnectStatus.setText("Stopped");
-			tAgentStatus.setText("Unknown");
-		}
-		 */
 		server = getHttpsServer();
 		if (server == null) {
 			buttonStart.setDisable(false);
@@ -413,8 +343,6 @@ public class lightserver extends Application {
 
 					light = null;
 					hasLight = false;
-					//shutdown();
-					//System.exit(-1);
 				} else {
 					cbVendor.getSelectionModel().select(ret[0]);
 					cbProduct.getSelectionModel().select(ret[1]);	
@@ -424,14 +352,12 @@ public class lightserver extends Application {
 		detectBusylight();
 
 		blinkTimeline.stop();
-		//circle.setFill(Color.rgb(0,255,0));
 		circle.setFill(Color.GRAY);
 		circleBlinkOn = false;	
 		stopTimeline.setCycleCount(1);
 		stopTimeline.play();		
 
 		if (hasLight && light != null) {
-			//light.ping();
 			light.rainbow();
 		}
 
@@ -531,7 +457,7 @@ public class lightserver extends Application {
 			server.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
 				public void configure(HttpsParameters params) {
 					try {
-						// initialise the SSL context
+						// initialize the SSL context
 						SSLContext c = SSLContext.getDefault();
 						SSLEngine engine = c.createSSLEngine();
 						params.setNeedClientAuth(false);
