@@ -67,8 +67,8 @@ java -jar BusyLightAD.jar
 ```
 
 ```java
-java -jar lightserver.jar 
-```	
+java -jar lightserver.jar
+```
 	
 ### Building
 
