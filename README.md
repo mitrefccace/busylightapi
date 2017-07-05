@@ -59,7 +59,11 @@ The lightserver program is a GUI for integrating a BusyLight with the ACE Direct
 ### Running
 
 ```java
-java -jar busylightad.jar _or_
+java -jar busylightad.jar
+```
+_or_
+
+```java
 java -jar lightserver.jar 
 ```	
 	
