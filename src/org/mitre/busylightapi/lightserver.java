@@ -300,8 +300,6 @@ public class lightserver extends Application {
 
 					light = null;
 					hasLight = false;
-					//shutdown();
-					//System.exit(-1);
 				}
 			}			
 		}

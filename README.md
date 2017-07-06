@@ -61,6 +61,7 @@ The lightserver program is a GUI for integrating a BusyLight with the ACE Direct
 * From the busylightapi project, export BusyLightGUI, BusyLightAD, or lightserver as a runnable JAR file
   * Select *Package required libraries into generated JAR*
   * Name it BusyLightGUI.jar, BusyLightAD.jar, or lightserver.jar
+* If you just want the executables, see the _exe_ folder
 
 ### Running
 
