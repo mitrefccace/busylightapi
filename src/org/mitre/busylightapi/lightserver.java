@@ -72,8 +72,8 @@ public class lightserver extends Application {
 	private long lastHeard;
 	private boolean hasLight = true;
 
-	private static final int BWIDTH = 310;
-	private static final int BHEIGHT = 410;		
+	private static final int BWIDTH = 330;
+	private static final int BHEIGHT = 455;		
 	private static final int TIMEOUT_SECS = 60;
 
 	public static void main(String[] args) {
@@ -294,7 +294,7 @@ public class lightserver extends Application {
 					alert.initModality(Modality.APPLICATION_MODAL);
 					alert.setTitle("Error");
 					alert.setHeaderText("Light Error");
-					String s ="Unable to connect to light. Make sure the program is not already running.";
+					String s ="Unable to connect to the light. Make sure the light is connected and this program is not already running.";
 					alert.setContentText(s);
 					alert.showAndWait();
 
@@ -335,7 +335,7 @@ public class lightserver extends Application {
 					alert.initModality(Modality.APPLICATION_MODAL);
 					alert.setTitle("Error");
 					alert.setHeaderText("Light Error");
-					String s ="Unable to connect to light. Make sure the program is not already running.";
+					String s ="Unable to connect to the light. Make sure the light is connected and this program is not already running.";
 					alert.setContentText(s);
 					alert.showAndWait();
 
