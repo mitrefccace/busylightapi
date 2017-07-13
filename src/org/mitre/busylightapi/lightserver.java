@@ -544,7 +544,9 @@ public class lightserver extends Application {
 				}				
 
 				JSONObject o = new JSONObject(json.toString());
-				tAgentStatus.setText(o.getString("status"));
+				
+				String capStatus = o.getString("status").substring(0, 1).toUpperCase() + o.getString("status").substring(1);
+				tAgentStatus.setText(capStatus);
 				if (o.getBoolean("stop")) {
 					if (hasLight && light != null)
 						light.stopLight();
