@@ -71,6 +71,4 @@ The lightserver program is a GUI for integrating a BusyLight with the ACE Direct
 	* ```user@yourmachine:~$  java -jar BusyLightAD.jar```
 	* ```user@yourmachine:~$  java -jar lightserver.jar```
 
-<p align="left">
-	<img src="image/lit.jpg"  width="25%" height="25%" alt="BusyLight Omega"/>
-</p>
+![](image/lit.jpg)
