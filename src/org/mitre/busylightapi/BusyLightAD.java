@@ -353,9 +353,8 @@ public class BusyLightAD extends Application {
 						if (!json.equalsIgnoreCase(currentJson)) {
 							processResponse(json);
 							currentJson = json;
-							//System.out.println("new response: " + json);
 						} else {
-							//System.out.println("same response");
+							;
 						}						
 						if (!json.equalsIgnoreCase(currentJson)) {
 							processResponse(json);
@@ -452,7 +451,6 @@ public class BusyLightAD extends Application {
 			if (response.getStatus() != 200) {
 				bRegistered = false;
 				if (response.getStatus() == 401) {
-					System.out.println("in here");
 					tStatus.setFill(javafx.scene.paint.Color.RED);
 					tStatus.setText("invalid token");
 					tConnectStatus.setText("Disconnected");
