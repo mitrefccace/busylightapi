@@ -225,7 +225,6 @@ public class lightserver extends Application {
 			server.createContext(sPath, new MyHandler());
 			server.createContext("/", new MyHandler());
 			server.start();
-			System.out.println("I live to serve: " + "https://localhost:" + port + sPath);
 		}
 
 		stage.show();
@@ -317,7 +316,6 @@ public class lightserver extends Application {
 			server.createContext(sPath, new MyHandler());
 			server.createContext("/", new MyHandler());
 			server.start();
-			System.out.println("I live to serve: " + "https://localhost:" + port + sPath);
 		}
 
 		timeoutTimeline.play();
@@ -390,7 +388,6 @@ public class lightserver extends Application {
 	}		
 
 	public void shutdown() {
-		System.out.println("shutting down...");
 		if (light != null) {
 			light.stopLight();
 			light.shutdown();
@@ -466,7 +463,6 @@ public class lightserver extends Application {
 						params.setSSLParameters(defaultSSLParameters);
 					} catch (Exception ex) {
 						ex.printStackTrace();
-						System.out.println("Failed to create HTTPS server");
 					}
 				}
 			});			
@@ -475,6 +471,11 @@ public class lightserver extends Application {
 		} catch (Exception e) {
 			e.printStackTrace();
 			server = null;
+			try {
+				is.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
 
 		return server;
@@ -579,7 +580,6 @@ public class lightserver extends Application {
 				tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);
 				tConnectStatus.setText("Running");
 			} catch (Exception e) {
-				System.err.println("error: " + e.getMessage());
 				e.printStackTrace();
 				if (hasLight && light != null)
 					light.stopLight();

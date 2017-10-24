@@ -61,12 +61,10 @@ public class BusyLightAPI implements HidServicesListener {
 
 		//test
 		light.rainbow(); 
-		System.out.println("Sleeping for 3 seconds...");
 		Thread.sleep(3000);
 
 		light.stopLight();
 		light.shutdown();
-		System.out.println("done.");
 	}
 
 	/* return the vendor and product indexes for the detected BusyLight device */
@@ -484,8 +482,6 @@ public class BusyLightAPI implements HidServicesListener {
 		ret[0] = (short)Math.round( (r / 255.0) * 100 );
 		ret[1] = (short)Math.round( (g / 255.0) * 100 );
 		ret[2] = (short)Math.round( (b / 255.0) * 100 );
-
-		//System.out.println(ret[0] + "," + ret[1] + "," + ret[2]);
 
 		return ret;
 	}
