@@ -54,7 +54,7 @@ The lightserver program is a GUI for integrating a BusyLight with the ACE Direct
 * Clone the busylightapi project and import it into Eclipse as an existing Java Project
   * Add the hid4java Maven project as a project in the Java build path
   * Add the hid4java resources folder as a source folder in the Java build path
-  * Export the src and resources folders in the order and export tab of the Java build path
+  * Export the src and resources folders in the *Order and Export* tab of the Java build path
 
 ### Building
 
