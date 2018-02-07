@@ -4,6 +4,10 @@ The busylightapi project is an open-source application programming interface (AP
 
 The BusyLightAPI class is a generic API for any external interface. It depends on platform-specific runtime libraries from the hid4java project (see *hid4java\src\main\resources*).
 
+### lightserver
+
+The lightserver program is a GUI for integrating a BusyLight with the ACE Direct platform. It provides a RESTful interface via localhost only, to the ACE Direct agent portal. It is only available locally on the agent's desktop computer. When the agent status changes, the portal makes RESTful calls to the lightserver. The ACE Direct portal makes the initial connection to lightserver, and all requests to localhost will work after that. This is an improvement on the BusyLightAD program, since a unique URL is not required. The lightserver application is the current and preferred interface between the BusyLight and ACE Direct.
+
 ### BusyLightGUI
 
 The BusyLightGUI program is a sample GUI that uses the BusyLightAPI class to control the device. This is a sample test program that demonstrates the various capabilities of the BusyLight.
@@ -11,10 +15,6 @@ The BusyLightGUI program is a sample GUI that uses the BusyLightAPI class to con
 ### BusyLightAD
 
 The BusyLightAD program is a GUI for integrating a BusyLight with the ACE Direct platform. BusyLightAD requires the ACE Direct agent portal URL to establish a connection to ACE Direct. The BusyLight AD GUI periodically queries ACE Direct for the latest agent status. This is the original interface between the BusyLight and ACE Direct.
-
-### lightserver
-
-The lightserver program is a GUI for integrating a BusyLight with the ACE Direct platform. It provides a RESTful interface via localhost only, to the ACE Direct agent portal. It is only available locally on the agent's desktop computer. When the agent status changes, the portal makes RESTful calls to the lightserver. The ACE Direct portal makes the initial connection to lightserver, and all requests to localhost will work after that. This is an improvement on the BusyLightAD program, since a unique URL is not required. The lightserver application is the current and preferred interface between the BusyLight and ACE Direct.
 
 ### Requirements
 
@@ -67,8 +67,8 @@ The lightserver program is a GUI for integrating a BusyLight with the ACE Direct
 
 * Plug BusyLight device into a USB port on your computer
 * Run
+	* ```user@yourmachine:~$  java -jar lightserver.jar```
 	* ```user@yourmachine:~$  java -jar BusyLightGUI.jar```
 	* ```user@yourmachine:~$  java -jar BusyLightAD.jar```
-	* ```user@yourmachine:~$  java -jar lightserver.jar```
 
 ![](image/lit.jpg)
