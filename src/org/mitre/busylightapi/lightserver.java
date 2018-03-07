@@ -462,19 +462,19 @@ public class lightserver extends Application {
 						SSLParameters defaultSSLParameters = c.getDefaultSSLParameters();
 						params.setSSLParameters(defaultSSLParameters);
 					} catch (Exception ex) {
-						ex.printStackTrace();
+						System.err.println("error - exception while initializing SSL context. continuing anyway...");
 					}
 				}
 			});			
 
 			is.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println("error - exception while creating HTTPS server object. continuing anyway...");
 			server = null;
 			try {
 				is.close();
 			} catch (IOException e1) {
-				e1.printStackTrace();
+				System.err.println("error - exception while closing Input Stream. continuing anyway...");
 			}
 		}
 
@@ -580,7 +580,7 @@ public class lightserver extends Application {
 				tConnectStatus.setFill(javafx.scene.paint.Color.GREEN);
 				tConnectStatus.setText("Running");
 			} catch (Exception e) {
-				e.printStackTrace();
+				System.err.println("error - exception during light processing. continuing anyway...");
 				if (hasLight && light != null)
 					light.stopLight();
 				blinkTimeline.stop();

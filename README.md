@@ -6,15 +6,11 @@ The BusyLightAPI class is a generic API for any external interface. It depends o
 
 ### lightserver
 
-The lightserver program is a GUI for integrating a BusyLight with the ACE Direct platform. It provides a RESTful interface via localhost only, to the ACE Direct agent portal. It is only available locally on the agent's desktop computer. When the agent status changes, the portal makes RESTful calls to the lightserver. The ACE Direct portal makes the initial connection to lightserver, and all requests to localhost will work after that. This is an improvement on the BusyLightAD program, since a unique URL is not required. The lightserver application is the current and preferred interface between the BusyLight and ACE Direct.
+The lightserver program is a GUI for integrating a BusyLight with the ACE Direct platform. It provides a RESTful interface via localhost only, to the ACE Direct agent portal. It is only available locally on the agent's desktop computer. When the agent status changes, the portal makes RESTful calls to the lightserver. The ACE Direct portal makes the initial connection to lightserver, and all requests to localhost will work after that. The lightserver application is the current and preferred interface between the BusyLight and ACE Direct.
 
 ### BusyLightGUI
 
 The BusyLightGUI program is a sample GUI that uses the BusyLightAPI class to control the device. This is a sample test program that demonstrates the various capabilities of the BusyLight.
-
-### BusyLightAD
-
-The BusyLightAD program is a GUI for integrating a BusyLight with the ACE Direct platform. BusyLightAD requires the ACE Direct agent portal URL to establish a connection to ACE Direct. The BusyLight AD GUI periodically queries ACE Direct for the latest agent status. This is the original interface between the BusyLight and ACE Direct.
 
 ### Requirements
 
@@ -58,9 +54,9 @@ The BusyLightAD program is a GUI for integrating a BusyLight with the ACE Direct
 
 ### Building
 
-* From the busylightapi project, export BusyLightGUI, BusyLightAD, or lightserver as a runnable JAR file
+* From the busylightapi project, export BusyLightGUI or lightserver as a runnable JAR file
   * Select *Package required libraries into generated JAR*
-  * Name it BusyLightGUI.jar, BusyLightAD.jar, or lightserver.jar
+  * Name it BusyLightGUI.jar or lightserver.jar
 * If you just want the executables, see the _exe_ folder
 
 ### Running
@@ -69,6 +65,5 @@ The BusyLightAD program is a GUI for integrating a BusyLight with the ACE Direct
 * Run
 	* ```user@yourmachine:~$  java -jar lightserver.jar```
 	* ```user@yourmachine:~$  java -jar BusyLightGUI.jar```
-	* ```user@yourmachine:~$  java -jar BusyLightAD.jar```
 
 ![](image/lit.jpg)
