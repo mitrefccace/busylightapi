@@ -1,0 +1,71 @@
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .column {
+        float: left;
+        width: 50%;
+        padding: 10px;
+        height: 600px;
+    }
+
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    .btn-group .button {
+        background-color: darkslategrey;
+       
+        border: 1px solid darkslategrey;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 10%;
+    }
+
+    .btn-group .button:not(:last-child) {
+        border-right: none;
+        /* Prevent double borders */
+    }
+
+    .btn-group .button:hover {
+        background-color: lightslategrey;
+    }
+
+    .busylightButton {
+        background-color: grey;
+        border: 5px solid dimgrey;
+        color: rgb(0, 0, 0);
+        padding: 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        height: 200px;
+        width: 200px;
+    }
+
+    .busylightButton {
+        border-radius: 50%;
+    }
+
+    .callscreen {
+        margin: auto;
+        position: absolute;
+        background-color: whitesmoke;
+        bottom: 10%;
+        width: 46%;
+        padding: 2px;
+    }
