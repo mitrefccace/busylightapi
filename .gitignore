@@ -16,3 +16,6 @@ target/
 
 # Java
 *.class
+
+# node
+node_modules/

@@ -1,222 +1,83 @@
-const { BrowserWindow } = require('electron').remote
-const path = require('path')
-const url = require('url')
-const Store = require('electron-store');
-const store = new Store();
+var ipc = require('electron').ipcRenderer;
+require('electron').ipcRenderer.setMaxListeners(0);
+var busylight = require('busylight').get();
 
 const testbutton = document.getElementById('testbutton');
 const busylightbutton = document.getElementById('busylightbutton');
-const availablebutton = document.getElementById('availablebutton');
-const unavailablebutton = document.getElementById('unavailablebutton');
-document.getElementById('status').value = "Running";
+const connectedStatus = document.getElementById('status');
 const agentstatus = document.getElementById('agentStatus');
-const callbutton = document.getElementById('callbutton');
-const endbutton = document.getElementById('endbutton');
-const acceptcall = document.getElementById('acceptcall');
-const rejectcall = document.getElementById('rejectcall');
-const incomingcalltext= document.getElementById('callscreen');
+const vendor = document.getElementById('vendorID');
 
+let blink;
+let isConnected;
+let testButtonCounter = 0;
 
-acceptcall.style.visibility = "hidden";
-rejectcall.style.visibility = "hidden";
-
-let blink = false;
-
-let status = "";
-
-var redValue;
-var greenValue;
-var blueValue;
-var lightStatus;
-var lightBlink;
-var isConnected;
-
-var busylight = require('busylight').get();
-busylight.on('disconnected', function (err){
-    if (err) console.log(err);
-});
-
-/* connected to server */
-testbutton.style.backgroundColor = 'grey';
-availablebutton.style.backgroundColor = 'grey';
-unavailablebutton.style.backgroundColor = 'grey';
-callbutton.style.backgroundColor = 'grey';
-endbutton.style.backgroundColor = 'grey';
-
-async function update() {
-    console.log(store.get('red'));
-    console.log(store.get('green'));
-    console.log(store.get('blue'));
-    console.log(store.get('status'));
-    console.log(store.get('connected'));
-    console.log(" ");
-
-    redValue = store.get('red');
-    greenValue = store.get('green');
-    blueValue = store.get('blue');
-    lightStatus = store.get('status');
-    lightBlink = store.get('blink');
-    isConnected = store.get('connected');
-
-    agentstatus.value = lightStatus;
-
-    if (lightBlink) {
-        while(lightBlink) {
-            await sleep(500).then(() => busylightbutton.style.backgroundColor = 'rgb(' +redValue+ ',' +greenValue+ ',' +blueValue+ ')');
-            await sleep(500).then(() => busylightbutton.style.backgroundColor = 'grey');
-        }
-    } else {
-        busylightbutton.style.backgroundColor = 'rgb(' +redValue+ ',' +greenValue+ ',' +blueValue+ ')';
-
-    }
-
-}
-
-setInterval(update, 1000);
+busylight.on('disconnected', function (err) {
+    console.log(err);
+    console.log("^^^^^");
+  });
 
 function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
+vendor.value = busylight.options.vendorId;
 
+/* Recieve data from main process */
+ipc.on('info', async function (event, data) {
 
+    if (data.agentstatus !== undefined) {
+        agentstatus.value = data.agentstatus;
 
-/*
-testbutton.addEventListener('click', async function (event) {
-    busylight.blink(['red', 'orange', 'yellow','green', 'blue', 'purple', 'pink'], 150);
-    await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'red' });
-    await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'orange' });
-    await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'yellow' });
-    await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'green' });
-    await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'blue' });
-    await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'purple' });
-    await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'pink' });
-    await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'grey' });
-    busylight.blink(false);
+        if (data.isConnected) {
+            testButtonCounter = 0;
+            connectedStatus.value = 'Connected';
+            blink = data.isBlinking;
+            isConnected = data.isConnected;
+            testbutton.style.backgroundColor = 'grey';
 
-    if (getStatus() === "Available") {
-        busylightbutton.style.backgroundColor = 'green';
-        busylight.light('#00FF00')
-    } else if (getStatus() === "Unavailable") {
-        busylightbutton.style.backgroundColor = 'red';
-        busylight.light('red')        
-    } else if (getStatus() === "In Call") {
-        busylightbutton.style.backgroundColor = 'yellow';
-        busylight.light('gold')
+            testbutton.onclick = function () {
+                console.log('Cannot test when connected to server');
+            }
+
+            if (blink) {
+                while (blink) {
+                    await sleep(200).then(() => busylightbutton.style.backgroundColor = data.rgb);
+                    await sleep(200).then(() => busylightbutton.style.backgroundColor = 'grey');
+                }
+            } else {
+                busylightbutton.style.backgroundColor = data.rgb;
+            }
+
+        } else {
+            //enable test button
+            testbutton.style.backgroundColor = 'darkslategrey';
+            connectedStatus.value = 'Disconnected';
+            isConnected = data.isConnected;
+
+            if (testButtonCounter === 0) {
+                /* This makes sure the rainbow function doesn't get interrupted */
+                busylightbutton.style.backgroundColor = 'grey';
+            }
+            testButtonCounter = 1;
+
+            testbutton.onclick = async function () {
+                event.sender.send('rainbow'); //tell index.js to make busylight rainbow
+                rainbow();
+            }
+        }
     }
 
 });
 
-availablebutton.addEventListener('click', function (event) {
-    setStatus("Available");
-});
-
-unavailablebutton.addEventListener('click', function (event) {
-    setStatus("Unavailable");
-});
-
-callbutton.addEventListener('click', function (event) {
-    if (getStatus() === "Available") {
-        acceptcall.style.visibility = "visible";
-        rejectcall.innerText = "Reject Call";
-        rejectcall.style.visibility = "visible";
-        incomingcalltext.value="Incoming Call";
-
-        blink = true;
-        incomingCall();
-
-        acceptcall.addEventListener('click', function (event) {
-            blink = false;
-            setStatus("In Call");
-
-            acceptcall.style.visibility = "hidden";
-            rejectcall.style.visibility = "hidden";
-            incomingcalltext.value="Call in Session";
-        });
-
-        rejectcall.addEventListener('click', function (event) {
-            blink = false;
-            acceptcall.style.visibility="hidden";
-            rejectcall.style.visibility="hidden";
-            incomingcalltext.value="";
-        });
-
-        endbutton.addEventListener('click', function (event) {
-            blink = false;
-            acceptcall.style.visibility="hidden";
-            rejectcall.style.visibility="hidden";
-            incomingcalltext.value="";
-        });
-    }
-});
-
-
-async function incomingCall() {
-    busylight.blink(['blue'], 250);
-    while (blink) {
-        if (getStatus() === "In Call") {
-            console.log(getStatus());
-        }       
-        
-        await sleep(250).then(() => { busylightbutton.style.backgroundColor = 'blue' });
-        await sleep(250).then(() => { busylightbutton.style.backgroundColor = 'grey' });
-
-        //await sleep(250).then(() => { busylight.light('grey')});
-       // await sleep(250).then(() => { busylight.light('blue') });
-        
-    };
-
-    if (getStatus() === "Available") {
-        setStatus("Available");
-    } else if (getStatus() === "Unavailable") {
-        setStatus("Unavailable");
-    } else {
-        setStatus("In Call");
-    }
-
-    if (getStatus() === "In Call") {
-        // TODO make timer
-
-        rejectcall.style.visibility = "visible";
-        rejectcall.innerText = "End Call";
-
-        rejectcall.addEventListener('click', function (event) {
-            setStatus("Available");
-            rejectcall.style.visibility="hidden";
-            incomingcalltext.value="";
-        });
-
-        endbutton.addEventListener('click', function (event) {
-            rejectcall.style.visibility="hidden";
-            incomingcalltext.value="";
-            setStatus("Available");
-        });
-
-    }
-
-}
-
-
-function setStatus(s) {
-    if (s === "Available") {
-        busylightbutton.style.backgroundColor = 'green';
-        agentstatus.value = "Available";
-        status = "Available";
-        busylight.light('#00FF00');
-    } else if (s === "Unavailable") {
-        busylightbutton.style.backgroundColor = 'red';
-        agentstatus.value = "Unavailable";
-        status = "Unavailable";
-        busylight.light('red');
-    } else if (s === "In Call") {
-        busylightbutton.style.backgroundColor = 'yellow';
-        agentstatus.value = "In Call";
-        status = "In Call";
-        busylight.light('gold');
+async function rainbow() {
+    if (!isConnected) {
+        await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'red' });
+        await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'orange' });
+        await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'yellow' });
+        await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'green' });
+        await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'blue' });
+        await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'purple' });
+        await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'pink' });
+        await sleep(500).then(() => { busylightbutton.style.backgroundColor = 'grey' });
     }
 }
-
-function getStatus() {
-    return status;
-}
-
-*/

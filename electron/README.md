@@ -3,15 +3,21 @@
 The Electron Busylight app utilizes the Express node package to read the status of agents and control the Busylight.
 
 ### Installation
+- `cd electron`
+- `npm install`
+- Plug Busylight into your computer
+- `npm start` 
+- Sign into the ACE Dirct agent portal
 
-* `cd electron`
-* `npm install`
-* Comment out Line 195 in `node_modules/busylight/lib/busylight.js`:
+### Building the Standalone App
+- `cd electron`
+- Build for MacOS:
+    - `npm run build-darwin`
+- Build for Windows:
+    - `npm run build-win32`
+- Build for Linux:
+    - `npm run build-linux`
+- Build for all platforms:
+    - `npm run build-all`
+- Application will be in `busylightapi/electron/dist`
 
-  * On Mac: `sed -i ''  's/this\.keepAliveTimer\.unref/\/\/this\.keepAliveTimer\.unref/' node_modules/busylight/lib/busylight.js`
-  * On Windows: `sed -i 's/this\.keepAliveTimer\.unref/\/\/this\.keepAliveTimer\.unref/' node_modules/busylight/lib/busylight.js`
-  * Or just edit the file and comment out Line 195
-
-* _Plug the Busylight into your computer_
-* `npm start`
-* Sign into the ACE Direct agent portal

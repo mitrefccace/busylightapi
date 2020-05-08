@@ -10,7 +10,7 @@
 <body>
 
     <div class="row">
-        <div class="column" style="background-color: lightcyan;">
+        <div class="column">
             <p>
                 <form>
                     <div class="STATUS">
@@ -27,15 +27,14 @@
             </p>
 
             <p>
-                <label>VENDOR ID</label>
-
-                <select id="vendorlist">
-                    <option value="1">0X27BB</option>
-                </select>
-
+                <div class="VENDOR ID">
+                    <label for="AGENT STATUS">VENDOR ID</label>
+                    <input name="VENDOR ID" id="vendorID" value="" readonly="readonly" />
+                </div>
+                
             </p>
 
-            <p>
+            <p> <!--
                 <label>PRODUCT ID</label>
                 <select id="productlist">
                     <option value="1">0x3BCA</option>
@@ -44,7 +43,7 @@
                     <option value="4">0x3BCD</option>
                     <option value="5">0x3BC0</option>
                 </select>
-            </p>
+            --></p>
             </form>
             <p>
                 <div class="btn-group">
@@ -57,46 +56,9 @@
             <center><button class="busylightButton" id="busylightbutton"></button></center>
 
 
-            <p>
-                <div class="btn-group">
-                    <center>
-                        <button class="button" id="availablebutton" value="availablebutton">Ready</button>
-                        <button class="button" id="unavailablebutton" value="unavailablebutton">Away</button>
-                    </center>
-                </div>
-            </p>
-
         </div>
-        <div class="column" style="background-color: lightblue;">
-            <p><strong>
-                    <center>User Call Screen</center>
-                </strong></p>
-            <div class="btn-group">
-                <center>
-                    <button class="button" id="callbutton" value="availablebutton">Call</button>
-                    <button class="button" id="endbutton" value="unavailablebutton">End</button>
-                </center>
-            </div>
-            <p></p>
-
-
-            <div class="callscreen">
-                <center>
-                    <label for="Call Screen"><center><strong>Employee Call Screen: </strong></center></label>
-                    <input name="Call Screen" id="callscreen" value="" readonly="readonly" style="background-color: transparent; border:none"
-                    /></center>
-
-                <p>
-                    <div class="btn-group">
-                        <center>
-                            <button class="button" id="acceptcall" value="availablebutton" style.visibility="hidden">Accept</button>
-                            <button class="button" id="rejectcall" value="unavailablebutton" style.visibility="hidden">Reject</button>
-                        </center>
-                    </div>
-            </div>
-        </div>
-
-        <script src="./mainWindow.js"></script>
+   
+         <script src="./mainWindow.js"></script>
 
 
     </body>
