@@ -24,6 +24,7 @@
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
     "localStorage": "^1.0.4",
+    "minimist": "^1.2.3",
     "morgan": "~1.9.1",
     "node-hid": "^1.2.0"
   },
